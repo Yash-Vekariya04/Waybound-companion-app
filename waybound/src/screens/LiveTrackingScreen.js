@@ -43,6 +43,13 @@ export default function LiveTrackingScreen({ navigation }) {
         accuracy: Location.Accuracy.High,
       });
       setLocation(loc.coords);
+      setMembers((prev) =>
+        prev.map((m) => ({
+          ...m,
+          lat: loc.coords.latitude + m.lat,
+          lng: loc.coords.longitude + m.lng,
+        })),
+      );
       setLoading(false);
     })();
   }, []);
@@ -57,6 +64,16 @@ export default function LiveTrackingScreen({ navigation }) {
           lat: location.latitude,
           lng: location.longitude,
           speed: "18 km/h",
+          status: "moving",
+        },
+        {
+          id: "2",
+          name: "Aryan",
+          initials: "A",
+          color: "#8e44ad",
+          lat: 0.001,
+          lng: 0.001,
+          speed: "16 km/h",
           status: "moving",
         },
         ...members,
@@ -165,7 +182,7 @@ export default function LiveTrackingScreen({ navigation }) {
           showsVerticalScrollIndicator={false}
           nestedScrollEnabled={true}
         >
-          {allMembers.length === 1 ? (
+          {allMembers.length === 0 ? (
             <View style={styles.emptyMembers}>
               <Text style={styles.emptyMembersEmoji}>👥</Text>
               <Text style={styles.emptyMembersText}>
@@ -180,7 +197,7 @@ export default function LiveTrackingScreen({ navigation }) {
                   styles.memberRow,
                   index < allMembers.length - 1 && styles.memberRowBorder,
                 ]}
-                onPress={() => navigation.navigate("MemberDetail")}
+                onPress={() => navigation.navigate("MemberDetail", { member })}
               >
                 <View
                   style={[
@@ -191,9 +208,14 @@ export default function LiveTrackingScreen({ navigation }) {
                   <Text style={styles.memberAvatarText}>{member.initials}</Text>
                 </View>
                 <View style={styles.memberInfo}>
-                  <Text style={styles.memberName}>
-                    {member.name} {member.id === "1" ? "(You)" : ""}
-                  </Text>
+                  <View style={styles.memberNameRow}>
+                    <Text style={styles.memberName}>{member.name}</Text>
+                    {member.id === "1" && (
+                      <View style={styles.youBadge}>
+                        <Text style={styles.youBadgeText}>You</Text>
+                      </View>
+                    )}
+                  </View>
                   <Text style={styles.memberSpeed}>{member.speed ?? "—"}</Text>
                 </View>
                 <View
@@ -431,5 +453,21 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
     textAlign: "center",
     lineHeight: 20,
+  },
+  memberNameRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: SPACING.xs,
+  },
+  youBadge: {
+    backgroundColor: COLORS.primary,
+    borderRadius: RADIUS.full,
+    paddingHorizontal: SPACING.xs + 2,
+    paddingVertical: 2,
+  },
+  youBadgeText: {
+    fontSize: FONTSIZE.xs,
+    fontFamily: FONTS.bold,
+    color: COLORS.textWhite,
   },
 });
