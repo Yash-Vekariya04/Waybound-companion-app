@@ -6,7 +6,6 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "locationAlwaysAndWhenInUsePermission": "Waybound needs your location to track your ride and share it with your friends.",
     "ios": {
       "supportsTablet": true
     },
@@ -22,7 +21,13 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-font"
+      "expo-font",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Waybound needs your location to track your ride and share it with your friends."
+        }
+      ]
     ]
   }
 }
