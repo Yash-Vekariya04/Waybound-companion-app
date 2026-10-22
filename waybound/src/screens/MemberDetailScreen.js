@@ -4,16 +4,14 @@ import {
   StatusBar, ScrollView, Linking
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { COLORS, FONTS, RADIUS, SPACING, FONTSIZE, SHADOW } from "../constants/theme";
+import { FONTS, RADIUS, SPACING, FONTSIZE, SHADOW } from "../constants/theme";
 import { useTheme } from "../context/ThemeContext";
 
-const { colors, isDark } = useTheme();
-// Mock member data — will come from Socket.io in backend phase
 const FALLBACK_MEMBER = {
   id: "1",
   name: "Unknown Member",
   initials: "?",
-  color: COLORS.primary,
+  color: "#0a8f7f",
   phone: "—",
   status: "moving",
   speed: "—",
@@ -27,20 +25,22 @@ const FALLBACK_MEMBER = {
   totalDistance: "—",
 };
 
-const StatCard = ({ emoji, label, value }) => (
-  <View style={styles.statCard}>
-    <Text style={styles.statEmoji}>{emoji}</Text>
-    <Text style={styles.statValue}>{value}</Text>
-    <Text style={styles.statLabel}>{label}</Text>
+const StatCard = ({ emoji, label, value, colors }) => (
+  <View style={makeStyles(colors).statCard}>
+    <Text style={makeStyles(colors).statEmoji}>{emoji}</Text>
+    <Text style={makeStyles(colors).statValue}>{value}</Text>
+    <Text style={makeStyles(colors).statLabel}>{label}</Text>
   </View>
 );
 
 export default function MemberDetailScreen({ navigation, route }) {
+  const { isDark, colors } = useTheme();
+  const s = makeStyles(colors);
+
   const passed = route.params?.member ?? {};
   const [member] = useState({
     ...FALLBACK_MEMBER,
     ...passed,
-    // Fields not in live data yet — show placeholder
     phone:           passed.phone           ?? "—",
     heading:         passed.heading         ?? "—",
     altitude:        passed.altitude        ?? "—",
@@ -54,9 +54,7 @@ export default function MemberDetailScreen({ navigation, route }) {
 
   const [messageSent, setMessageSent] = useState(false);
 
-  const handleCall = () => {
-    Linking.openURL(`tel:${member.phone}`);
-  };
+  const handleCall = () => Linking.openURL(`tel:${member.phone}`);
 
   const handlePing = () => {
     setMessageSent(true);
@@ -64,139 +62,118 @@ export default function MemberDetailScreen({ navigation, route }) {
   };
 
   return (
-    <SafeAreaView style={styles.root}>
-      <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
+    <SafeAreaView style={s.root}>
+      <StatusBar
+        barStyle={isDark ? "light-content" : "dark-content"}
+        backgroundColor={colors.background}
+      />
 
       {/* ── Top Bar ── */}
-      <View style={styles.topBar}>
-        <TouchableOpacity
-          style={styles.backBtn}
-          onPress={() => navigation.goBack()}
-        >
-          <Text style={styles.backArrow}>←</Text>
+      <View style={s.topBar}>
+        <TouchableOpacity style={s.backBtn} onPress={() => navigation.goBack()}>
+          <Text style={s.backArrow}>←</Text>
         </TouchableOpacity>
-        <Text style={styles.topBarTitle}>Member Details</Text>
+        <Text style={s.topBarTitle}>Member Details</Text>
         <View style={{ width: 40 }} />
       </View>
 
       <ScrollView
-        contentContainerStyle={styles.scroll}
+        contentContainerStyle={s.scroll}
         showsVerticalScrollIndicator={false}
       >
 
         {/* ── Profile Card ── */}
-        <View style={styles.profileCard}>
-          <View style={[styles.avatarCircle, { backgroundColor: member.color }]}>
-            <Text style={styles.avatarText}>{member.initials}</Text>
+        <View style={s.profileCard}>
+          <View style={[s.avatarCircle, { backgroundColor: member.color }]}>
+            <Text style={s.avatarText}>{member.initials}</Text>
           </View>
-          <Text style={styles.memberName}>{member.name}</Text>
-          <Text style={styles.memberPhone}>{member.phone}</Text>
+          <Text style={s.memberName}>{member.name}</Text>
+          <Text style={s.memberPhone}>{member.phone}</Text>
 
-          {/* Status Badge */}
           <View style={[
-            styles.statusBadge,
-            member.status === "moving"
-              ? styles.statusMoving
-              : styles.statusStopped
+            s.statusBadge,
+            member.status === "moving" ? s.statusMoving : s.statusStopped,
           ]}>
             <View style={[
-              styles.statusDot,
-              member.status === "moving"
-                ? styles.statusDotMoving
-                : styles.statusDotStopped
+              s.statusDot,
+              member.status === "moving" ? s.statusDotMoving : s.statusDotStopped,
             ]} />
             <Text style={[
-              styles.statusText,
-              member.status === "moving"
-                ? styles.statusTextMoving
-                : styles.statusTextStopped
+              s.statusText,
+              member.status === "moving" ? s.statusTextMoving : s.statusTextStopped,
             ]}>
               {member.status === "moving" ? "Moving" : "Stopped"}
             </Text>
           </View>
 
-          {/* Ping Success Message */}
           {messageSent && (
-            <View style={styles.pingSuccess}>
-              <Text style={styles.pingSuccessText}>
+            <View style={s.pingSuccess}>
+              <Text style={s.pingSuccessText}>
                 👋 Ping sent to {member.name.split(" ")[0]}!
               </Text>
             </View>
           )}
 
-          {/* Action Buttons */}
-          <View style={styles.actionRow}>
-            <TouchableOpacity
-              style={[styles.actionBtn, styles.actionBtnPrimary]}
-              onPress={handlePing}
-            >
-              <Text style={styles.actionBtnEmoji}>👋</Text>
-              <Text style={styles.actionBtnTextPrimary}>Ping</Text>
+          <View style={s.actionRow}>
+            <TouchableOpacity style={[s.actionBtn, s.actionBtnPrimary]} onPress={handlePing}>
+              <Text style={s.actionBtnEmoji}>👋</Text>
+              <Text style={s.actionBtnTextPrimary}>Ping</Text>
             </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.actionBtn, styles.actionBtnOutline]}
-              onPress={handleCall}
-            >
-              <Text style={styles.actionBtnEmoji}>📞</Text>
-              <Text style={styles.actionBtnTextOutline}>Call</Text>
+            <TouchableOpacity style={[s.actionBtn, s.actionBtnOutline]} onPress={handleCall}>
+              <Text style={s.actionBtnEmoji}>📞</Text>
+              <Text style={s.actionBtnTextOutline}>Call</Text>
             </TouchableOpacity>
-
             <TouchableOpacity
-              style={[styles.actionBtn, styles.actionBtnDanger]}
+              style={[s.actionBtn, s.actionBtnDanger]}
               onPress={() => navigation.navigate("SafetyAlert")}
             >
-              <Text style={styles.actionBtnEmoji}>🚨</Text>
-              <Text style={styles.actionBtnTextDanger}>Alert</Text>
+              <Text style={s.actionBtnEmoji}>🚨</Text>
+              <Text style={s.actionBtnTextDanger}>Alert</Text>
             </TouchableOpacity>
           </View>
         </View>
 
         {/* ── Live Stats Grid ── */}
-        <Text style={styles.sectionLabel}>Live Stats</Text>
-        <View style={styles.statsGrid}>
-          <StatCard emoji="🏎️" label="Speed"         value={member.speed} />
-          <StatCard emoji="🧭" label="Heading"       value={member.heading} />
-          <StatCard emoji="📍" label="Distance"      value={member.distanceFromYou} />
-          <StatCard emoji="⛰️" label="Altitude"      value={member.altitude} />
-          <StatCard emoji="🎯" label="GPS Accuracy"  value={member.accuracy} />
-          <StatCard emoji="🔋" label="Battery"       value={member.batteryLevel} />
+        <Text style={s.sectionLabel}>Live Stats</Text>
+        <View style={s.statsGrid}>
+          <StatCard emoji="🏎️" label="Speed"        value={member.speed}           colors={colors} />
+          <StatCard emoji="🧭" label="Heading"      value={member.heading}         colors={colors} />
+          <StatCard emoji="📍" label="Distance"     value={member.distanceFromYou} colors={colors} />
+          <StatCard emoji="⛰️" label="Altitude"     value={member.altitude}        colors={colors} />
+          <StatCard emoji="🎯" label="GPS Accuracy" value={member.accuracy}        colors={colors} />
+          <StatCard emoji="🔋" label="Battery"      value={member.batteryLevel}    colors={colors} />
         </View>
 
         {/* ── Trip Info ── */}
-        <Text style={styles.sectionLabel}>Trip Info</Text>
-        <View style={styles.infoCard}>
-
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>⏱️  Joined ride</Text>
-            <Text style={styles.infoValue}>{member.joinedAt}</Text>
+        <Text style={s.sectionLabel}>Trip Info</Text>
+        <View style={s.infoCard}>
+          <View style={s.infoRow}>
+            <Text style={s.infoLabel}>⏱️  Joined ride</Text>
+            <Text style={s.infoValue}>{member.joinedAt}</Text>
           </View>
-          <View style={styles.infoDivider} />
-
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>🛣️  Total distance</Text>
-            <Text style={styles.infoValue}>{member.totalDistance}</Text>
+          <View style={s.infoDivider} />
+          <View style={s.infoRow}>
+            <Text style={s.infoLabel}>🛣️  Total distance</Text>
+            <Text style={s.infoValue}>{member.totalDistance}</Text>
           </View>
-          <View style={styles.infoDivider} />
-
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>🕐  Last seen</Text>
-            <Text style={styles.infoValue}>{member.lastSeen}</Text>
+          <View style={s.infoDivider} />
+          <View style={s.infoRow}>
+            <Text style={s.infoLabel}>🕐  Last seen</Text>
+            <Text style={s.infoValue}>{member.lastSeen}</Text>
           </View>
-
         </View>
 
-        {/* ── Focus on Map Button ── */}
+        {/* ── Focus on Map ── */}
         <TouchableOpacity
-          style={styles.focusBtn}
+          style={s.focusBtn}
           onPress={() => navigation.navigate("LiveTracking")}
         >
-          <Text style={styles.focusBtnText}>🗺️  Focus on Map</Text>
+          <Text style={s.focusBtnText}>🗺️  Focus on Map</Text>
         </TouchableOpacity>
 
         {/* ── Remove From Room ── */}
-        <TouchableOpacity style={styles.removeBtn}>
-          <Text style={styles.removeBtnText}>Remove from Room</Text>
+        <TouchableOpacity style={s.removeBtn}>
+          <Text style={s.removeBtnText}>Remove from Room</Text>
         </TouchableOpacity>
 
       </ScrollView>
@@ -204,13 +181,11 @@ export default function MemberDetailScreen({ navigation, route }) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors) => StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: COLORS.background,
+    backgroundColor: colors.background,
   },
-
-  // Top Bar
   topBar: {
     flexDirection: "row",
     alignItems: "center",
@@ -218,44 +193,41 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.md,
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
-    backgroundColor: COLORS.background,
+    borderBottomColor: colors.border,
+    backgroundColor: colors.background,
   },
   backBtn: {
     width: 40,
     height: 40,
     borderRadius: RADIUS.md,
-    backgroundColor: COLORS.inputBg,
+    backgroundColor: colors.inputBg,
     alignItems: "center",
     justifyContent: "center",
   },
   backArrow: {
     fontSize: FONTSIZE.xl,
-    color: COLORS.textPrimary,
+    color: colors.textPrimary,
     fontFamily: FONTS.medium,
   },
   topBarTitle: {
     fontSize: FONTSIZE.lg,
     fontFamily: FONTS.bold,
-    color: COLORS.textPrimary,
+    color: colors.textPrimary,
   },
-
   scroll: {
     flexGrow: 1,
     paddingHorizontal: SPACING.lg,
     paddingTop: SPACING.lg,
     paddingBottom: SPACING.xxl,
   },
-
-  // Profile Card
   profileCard: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     borderRadius: RADIUS.xl,
     padding: SPACING.lg,
     alignItems: "center",
     marginBottom: SPACING.lg,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: colors.border,
     ...SHADOW.md,
   },
   avatarCircle: {
@@ -270,22 +242,20 @@ const styles = StyleSheet.create({
   avatarText: {
     fontSize: FONTSIZE.xxl,
     fontFamily: FONTS.bold,
-    color: COLORS.textWhite,
+    color: colors.textWhite,
   },
   memberName: {
     fontSize: FONTSIZE.xl,
     fontFamily: FONTS.bold,
-    color: COLORS.textPrimary,
+    color: colors.textPrimary,
     marginBottom: SPACING.xs,
   },
   memberPhone: {
     fontSize: FONTSIZE.sm,
     fontFamily: FONTS.regular,
-    color: COLORS.textSecondary,
+    color: colors.textSecondary,
     marginBottom: SPACING.md,
   },
-
-  // Status Badge
   statusBadge: {
     flexDirection: "row",
     alignItems: "center",
@@ -295,35 +265,21 @@ const styles = StyleSheet.create({
     gap: SPACING.xs,
     marginBottom: SPACING.md,
   },
-  statusMoving: {
-    backgroundColor: "rgba(46,204,113,0.12)",
-  },
-  statusStopped: {
-    backgroundColor: "rgba(231,76,60,0.1)",
-  },
+  statusMoving:  { backgroundColor: "rgba(46,204,113,0.12)" },
+  statusStopped: { backgroundColor: "rgba(231,76,60,0.1)"   },
   statusDot: {
     width: 7,
     height: 7,
     borderRadius: RADIUS.full,
   },
-  statusDotMoving: {
-    backgroundColor: COLORS.secondary,
-  },
-  statusDotStopped: {
-    backgroundColor: COLORS.danger,
-  },
+  statusDotMoving:  { backgroundColor: "#2ecc71" },
+  statusDotStopped: { backgroundColor: "#e74c3c" },
   statusText: {
     fontSize: FONTSIZE.sm,
     fontFamily: FONTS.medium,
   },
-  statusTextMoving: {
-    color: COLORS.secondary,
-  },
-  statusTextStopped: {
-    color: COLORS.danger,
-  },
-
-  // Ping Success
+  statusTextMoving:  { color: "#2ecc71" },
+  statusTextStopped: { color: "#e74c3c" },
   pingSuccess: {
     backgroundColor: "#f0faf9",
     borderRadius: RADIUS.md,
@@ -336,10 +292,8 @@ const styles = StyleSheet.create({
   pingSuccessText: {
     fontSize: FONTSIZE.sm,
     fontFamily: FONTS.medium,
-    color: COLORS.primary,
+    color: "#0a8f7f",
   },
-
-  // Action Buttons
   actionRow: {
     flexDirection: "row",
     gap: SPACING.sm,
@@ -354,13 +308,13 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   actionBtnPrimary: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: colors.primary,
     ...SHADOW.sm,
   },
   actionBtnOutline: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: colors.border,
     ...SHADOW.sm,
   },
   actionBtnDanger: {
@@ -368,34 +322,28 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#fdd",
   },
-  actionBtnEmoji: {
-    fontSize: 20,
-  },
+  actionBtnEmoji: { fontSize: 20 },
   actionBtnTextPrimary: {
     fontSize: FONTSIZE.sm,
     fontFamily: FONTS.bold,
-    color: COLORS.textWhite,
+    color: colors.textWhite,
   },
   actionBtnTextOutline: {
     fontSize: FONTSIZE.sm,
     fontFamily: FONTS.bold,
-    color: COLORS.textPrimary,
+    color: colors.textPrimary,
   },
   actionBtnTextDanger: {
     fontSize: FONTSIZE.sm,
     fontFamily: FONTS.bold,
-    color: COLORS.danger,
+    color: "#e74c3c",
   },
-
-  // Section Label
   sectionLabel: {
     fontSize: FONTSIZE.sm,
     fontFamily: FONTS.medium,
-    color: COLORS.textSecondary,
+    color: colors.textSecondary,
     marginBottom: SPACING.sm,
   },
-
-  // Stats Grid
   statsGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -404,39 +352,34 @@ const styles = StyleSheet.create({
   },
   statCard: {
     width: "31%",
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     borderRadius: RADIUS.lg,
     padding: SPACING.md,
     alignItems: "center",
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: colors.border,
     ...SHADOW.sm,
   },
-  statEmoji: {
-    fontSize: 22,
-    marginBottom: SPACING.xs,
-  },
+  statEmoji: { fontSize: 22, marginBottom: SPACING.xs },
   statValue: {
     fontSize: FONTSIZE.sm,
     fontFamily: FONTS.bold,
-    color: COLORS.textPrimary,
+    color: colors.textPrimary,
     textAlign: "center",
   },
   statLabel: {
     fontSize: FONTSIZE.xs,
     fontFamily: FONTS.regular,
-    color: COLORS.textSecondary,
+    color: colors.textSecondary,
     marginTop: 2,
     textAlign: "center",
   },
-
-  // Info Card
   infoCard: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     borderRadius: RADIUS.lg,
     padding: SPACING.md,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: colors.border,
     marginBottom: SPACING.lg,
     ...SHADOW.sm,
   },
@@ -448,22 +391,20 @@ const styles = StyleSheet.create({
   },
   infoDivider: {
     height: 1,
-    backgroundColor: COLORS.border,
+    backgroundColor: colors.border,
   },
   infoLabel: {
     fontSize: FONTSIZE.md,
     fontFamily: FONTS.regular,
-    color: COLORS.textSecondary,
+    color: colors.textSecondary,
   },
   infoValue: {
     fontSize: FONTSIZE.md,
     fontFamily: FONTS.medium,
-    color: COLORS.textPrimary,
+    color: colors.textPrimary,
   },
-
-  // Focus Button
   focusBtn: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: colors.primary,
     borderRadius: RADIUS.lg,
     paddingVertical: SPACING.md,
     alignItems: "center",
@@ -473,10 +414,8 @@ const styles = StyleSheet.create({
   focusBtnText: {
     fontSize: FONTSIZE.lg,
     fontFamily: FONTS.bold,
-    color: COLORS.textWhite,
+    color: colors.textWhite,
   },
-
-  // Remove Button
   removeBtn: {
     alignItems: "center",
     paddingVertical: SPACING.sm,
@@ -484,6 +423,6 @@ const styles = StyleSheet.create({
   removeBtnText: {
     fontSize: FONTSIZE.sm,
     fontFamily: FONTS.medium,
-    color: COLORS.danger,
+    color: colors.danger,
   },
 });
