@@ -3,140 +3,144 @@ import {
   View, Text, StyleSheet, ScrollView,
   TouchableOpacity, StatusBar
 } from "react-native";
-import {SafeAreaView} from "react-native-safe-area-context";
-import { COLORS, FONTS, RADIUS, SPACING, FONTSIZE, SHADOW } from "../constants/theme";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { FONTS, RADIUS, SPACING, FONTSIZE, SHADOW } from "../constants/theme";
 import { useTheme } from "../context/ThemeContext";
 
-const { colors, isDark } = useTheme();
 const RECENT_TRIPS = [
-  { id: "1", name: "Coastal Ride", date: "Oct 18", members: 4, duration: "2h 34m" },
+  { id: "1", name: "Coastal Ride",  date: "Oct 18", members: 4, duration: "2h 34m" },
   { id: "2", name: "Mountain Loop", date: "Oct 14", members: 6, duration: "4h 12m" },
-  { id: "3", name: "City Cruise", date: "Oct 10", members: 3, duration: "1h 20m" },
+  { id: "3", name: "City Cruise",   date: "Oct 10", members: 3, duration: "1h 20m" },
 ];
 
 export default function HomeScreen({ navigation }) {
+  const { isDark, colors } = useTheme();
+  const s = makeStyles(colors);
+
   const [hasActiveRoom] = useState(false);
 
   return (
-    <SafeAreaView style={styles.root}>
-      <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
+    <SafeAreaView style={s.root}>
+      <StatusBar
+        barStyle={isDark ? "light-content" : "dark-content"}
+        backgroundColor={colors.background}
+      />
       <ScrollView
-        contentContainerStyle={styles.scroll}
+        contentContainerStyle={s.scroll}
         showsVerticalScrollIndicator={false}
       >
 
         {/* ── Header ── */}
-        <View style={styles.header}>
+        <View style={s.header}>
           <View>
-            <Text style={styles.greeting}>Good morning 👋</Text>
-            <Text style={styles.username}>Yash</Text>
+            <Text style={s.greeting}>Good morning 👋</Text>
+            <Text style={s.username}>Yash</Text>
           </View>
           <TouchableOpacity
-            style={styles.avatarCircle}
+            style={s.avatarCircle}
             onPress={() => navigation.navigate("Settings")}
           >
-            <Text style={styles.avatarText}>Y</Text>
+            <Text style={s.avatarText}>Y</Text>
           </TouchableOpacity>
         </View>
 
         {/* ── Active Room Card or No Room State ── */}
         {hasActiveRoom ? (
-          <View style={[styles.card, styles.activeRoomCard]}>
-            <View style={styles.activeRoomTop}>
+          <View style={[s.card, s.activeRoomCard]}>
+            <View style={s.activeRoomTop}>
               <View>
-                <Text style={styles.activeRoomLabel}>Active Room</Text>
-                <Text style={styles.activeRoomName}>Coastal Ride 🚴</Text>
+                <Text style={s.activeRoomLabel}>Active Room</Text>
+                <Text style={s.activeRoomName}>Coastal Ride 🚴</Text>
               </View>
-              <View style={styles.liveBadge}>
-                <View style={styles.liveDot} />
-                <Text style={styles.liveText}>LIVE</Text>
+              <View style={s.liveBadge}>
+                <View style={s.liveDot} />
+                <Text style={s.liveText}>LIVE</Text>
               </View>
             </View>
-            <View style={styles.activeRoomStats}>
-              <View style={styles.statItem}>
-                <Text style={styles.statValue}>5</Text>
-                <Text style={styles.statLabel}>Members</Text>
+            <View style={s.activeRoomStats}>
+              <View style={s.statItem}>
+                <Text style={s.statValue}>5</Text>
+                <Text style={s.statLabel}>Members</Text>
               </View>
-              <View style={styles.statDivider} />
-              <View style={styles.statItem}>
-                <Text style={styles.statValue}>12 km</Text>
-                <Text style={styles.statLabel}>Distance</Text>
+              <View style={s.statDivider} />
+              <View style={s.statItem}>
+                <Text style={s.statValue}>12 km</Text>
+                <Text style={s.statLabel}>Distance</Text>
               </View>
-              <View style={styles.statDivider} />
-              <View style={styles.statItem}>
-                <Text style={styles.statValue}>1h 04m</Text>
-                <Text style={styles.statLabel}>Duration</Text>
+              <View style={s.statDivider} />
+              <View style={s.statItem}>
+                <Text style={s.statValue}>1h 04m</Text>
+                <Text style={s.statLabel}>Duration</Text>
               </View>
             </View>
             <TouchableOpacity
-              style={styles.rejoinBtn}
+              style={s.rejoinBtn}
               onPress={() => navigation.navigate("LiveTracking")}
             >
-              <Text style={styles.rejoinBtnText}>Rejoin Room →</Text>
+              <Text style={s.rejoinBtnText}>Rejoin Room →</Text>
             </TouchableOpacity>
           </View>
         ) : (
-          <View style={[styles.card, styles.noRoomCard]}>
-            <Text style={styles.noRoomEmoji}>🗺️</Text>
-            <Text style={styles.noRoomTitle}>No active room</Text>
-            <Text style={styles.noRoomSub}>
+          <View style={[s.card, s.noRoomCard]}>
+            <Text style={s.noRoomEmoji}>🗺️</Text>
+            <Text style={s.noRoomTitle}>No active room</Text>
+            <Text style={s.noRoomSub}>
               Create a room or join one to start tracking your ride.
             </Text>
           </View>
         )}
 
         {/* ── Quick Actions ── */}
-        <Text style={styles.sectionTitle}>Quick Actions</Text>
-        <View style={styles.actionsRow}>
+        <Text style={s.sectionTitle}>Quick Actions</Text>
+        <View style={s.actionsRow}>
           <TouchableOpacity
-            style={[styles.actionCard, styles.actionCardPrimary]}
+            style={[s.actionCard, s.actionCardPrimary]}
             onPress={() => navigation.navigate("CreateRoom")}
           >
-            <Text style={styles.actionEmoji}>➕</Text>
-            <Text style={styles.actionLabelPrimary}>Create Room</Text>
-            <Text style={styles.actionSubPrimary}>Start a new ride</Text>
+            <Text style={s.actionEmoji}>➕</Text>
+            <Text style={s.actionLabelPrimary}>Create Room</Text>
+            <Text style={s.actionSubPrimary}>Start a new ride</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.actionCard, styles.actionCardOutline]}
+            style={[s.actionCard, s.actionCardOutline]}
             onPress={() => navigation.navigate("JoinRoom")}
           >
-            <Text style={styles.actionEmoji}>🔗</Text>
-            <Text style={styles.actionLabelOutline}>Join Room</Text>
-            <Text style={styles.actionSubOutline}>Enter a room code</Text>
+            <Text style={s.actionEmoji}>🔗</Text>
+            <Text style={s.actionLabelOutline}>Join Room</Text>
+            <Text style={s.actionSubOutline}>Enter a room code</Text>
           </TouchableOpacity>
         </View>
 
         {/* ── Safety Alert Button ── */}
         <TouchableOpacity
-          style={styles.alertBtn}
+          style={s.alertBtn}
           onPress={() => navigation.navigate("SafetyAlert")}
         >
-          <Text style={styles.alertBtnEmoji}>🚨</Text>
+          <Text style={s.alertBtnEmoji}>🚨</Text>
           <View>
-            <Text style={styles.alertBtnTitle}>Safety Alert</Text>
-            <Text style={styles.alertBtnSub}>Notify your group instantly</Text>
+            <Text style={s.alertBtnTitle}>Safety Alert</Text>
+            <Text style={s.alertBtnSub}>Notify your group instantly</Text>
           </View>
-          <Text style={styles.alertBtnArrow}>→</Text>
+          <Text style={s.alertBtnArrow}>→</Text>
         </TouchableOpacity>
 
         {/* ── Recent Trips ── */}
-        <Text style={styles.sectionTitle}>Recent Trips</Text>
-
+        <Text style={s.sectionTitle}>Recent Trips</Text>
         {RECENT_TRIPS.map((trip) => (
-          <View key={trip.id} style={styles.tripCard}>
-            <View style={styles.tripLeft}>
-              <View style={styles.tripIconCircle}>
-                <Text style={styles.tripIcon}>🚴</Text>
+          <View key={trip.id} style={s.tripCard}>
+            <View style={s.tripLeft}>
+              <View style={s.tripIconCircle}>
+                <Text style={s.tripIcon}>🚴</Text>
               </View>
               <View>
-                <Text style={styles.tripName}>{trip.name}</Text>
-                <Text style={styles.tripMeta}>
+                <Text style={s.tripName}>{trip.name}</Text>
+                <Text style={s.tripMeta}>
                   {trip.date} · {trip.members} members
                 </Text>
               </View>
             </View>
-            <Text style={styles.tripDuration}>{trip.duration}</Text>
+            <Text style={s.tripDuration}>{trip.duration}</Text>
           </View>
         ))}
 
@@ -145,10 +149,10 @@ export default function HomeScreen({ navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors) => StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: COLORS.background,
+    backgroundColor: colors.background,
   },
   scroll: {
     flexGrow: 1,
@@ -156,8 +160,6 @@ const styles = StyleSheet.create({
     paddingTop: SPACING.lg,
     paddingBottom: SPACING.xxl,
   },
-
-  // Header
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -167,18 +169,18 @@ const styles = StyleSheet.create({
   greeting: {
     fontSize: FONTSIZE.sm,
     fontFamily: FONTS.regular,
-    color: COLORS.textSecondary,
+    color: colors.textSecondary,
   },
   username: {
     fontSize: FONTSIZE.xxl,
     fontFamily: FONTS.bold,
-    color: COLORS.textPrimary,
+    color: colors.textPrimary,
   },
   avatarCircle: {
     width: 44,
     height: 44,
     borderRadius: RADIUS.full,
-    backgroundColor: COLORS.primary,
+    backgroundColor: colors.primary,
     alignItems: "center",
     justifyContent: "center",
     ...SHADOW.sm,
@@ -186,20 +188,16 @@ const styles = StyleSheet.create({
   avatarText: {
     fontSize: FONTSIZE.lg,
     fontFamily: FONTS.bold,
-    color: COLORS.textWhite,
+    color: colors.textWhite,
   },
-
-  // Card base
   card: {
     borderRadius: RADIUS.lg,
     padding: SPACING.lg,
     marginBottom: SPACING.lg,
     ...SHADOW.md,
   },
-
-  // Active Room Card
   activeRoomCard: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: colors.primary,
   },
   activeRoomTop: {
     flexDirection: "row",
@@ -215,7 +213,7 @@ const styles = StyleSheet.create({
   activeRoomName: {
     fontSize: FONTSIZE.xl,
     fontFamily: FONTS.bold,
-    color: COLORS.textWhite,
+    color: colors.textWhite,
     marginTop: 2,
   },
   liveBadge: {
@@ -236,7 +234,7 @@ const styles = StyleSheet.create({
   liveText: {
     fontSize: FONTSIZE.xs,
     fontFamily: FONTS.bold,
-    color: COLORS.textWhite,
+    color: colors.textWhite,
     letterSpacing: 1,
   },
   activeRoomStats: {
@@ -255,7 +253,7 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: FONTSIZE.lg,
     fontFamily: FONTS.bold,
-    color: COLORS.textWhite,
+    color: colors.textWhite,
   },
   statLabel: {
     fontSize: FONTSIZE.xs,
@@ -269,7 +267,7 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255,255,255,0.25)",
   },
   rejoinBtn: {
-    backgroundColor: COLORS.textWhite,
+    backgroundColor: colors.textWhite,
     borderRadius: RADIUS.md,
     paddingVertical: SPACING.sm + 2,
     alignItems: "center",
@@ -277,15 +275,13 @@ const styles = StyleSheet.create({
   rejoinBtnText: {
     fontSize: FONTSIZE.md,
     fontFamily: FONTS.bold,
-    color: COLORS.primary,
+    color: colors.primary,
   },
-
-  // No Room Card
   noRoomCard: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     alignItems: "center",
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: colors.border,
   },
   noRoomEmoji: {
     fontSize: 36,
@@ -294,26 +290,22 @@ const styles = StyleSheet.create({
   noRoomTitle: {
     fontSize: FONTSIZE.lg,
     fontFamily: FONTS.bold,
-    color: COLORS.textPrimary,
+    color: colors.textPrimary,
     marginBottom: SPACING.xs,
   },
   noRoomSub: {
     fontSize: FONTSIZE.sm,
     fontFamily: FONTS.regular,
-    color: COLORS.textSecondary,
+    color: colors.textSecondary,
     textAlign: "center",
     lineHeight: 20,
   },
-
-  // Section Title
   sectionTitle: {
     fontSize: FONTSIZE.lg,
     fontFamily: FONTS.bold,
-    color: COLORS.textPrimary,
+    color: colors.textPrimary,
     marginBottom: SPACING.md,
   },
-
-  // Quick Actions
   actionsRow: {
     flexDirection: "row",
     gap: SPACING.sm,
@@ -326,12 +318,12 @@ const styles = StyleSheet.create({
     ...SHADOW.sm,
   },
   actionCardPrimary: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: colors.primary,
   },
   actionCardOutline: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: colors.border,
   },
   actionEmoji: {
     fontSize: 24,
@@ -340,7 +332,7 @@ const styles = StyleSheet.create({
   actionLabelPrimary: {
     fontSize: FONTSIZE.md,
     fontFamily: FONTS.bold,
-    color: COLORS.textWhite,
+    color: colors.textWhite,
   },
   actionSubPrimary: {
     fontSize: FONTSIZE.xs,
@@ -351,20 +343,18 @@ const styles = StyleSheet.create({
   actionLabelOutline: {
     fontSize: FONTSIZE.md,
     fontFamily: FONTS.bold,
-    color: COLORS.textPrimary,
+    color: colors.textPrimary,
   },
   actionSubOutline: {
     fontSize: FONTSIZE.xs,
     fontFamily: FONTS.regular,
-    color: COLORS.textSecondary,
+    color: colors.textSecondary,
     marginTop: 2,
   },
-
-  // Safety Alert Button
   alertBtn: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#fff5f5",
+    backgroundColor: colors.surface,
     borderRadius: RADIUS.lg,
     padding: SPACING.md,
     borderWidth: 1,
@@ -379,32 +369,30 @@ const styles = StyleSheet.create({
   alertBtnTitle: {
     fontSize: FONTSIZE.md,
     fontFamily: FONTS.bold,
-    color: COLORS.danger,
+    color: colors.danger,
   },
   alertBtnSub: {
     fontSize: FONTSIZE.xs,
     fontFamily: FONTS.regular,
-    color: COLORS.textSecondary,
+    color: colors.textSecondary,
     marginTop: 2,
   },
   alertBtnArrow: {
     marginLeft: "auto",
     fontSize: FONTSIZE.lg,
-    color: COLORS.danger,
+    color: colors.danger,
     fontFamily: FONTS.bold,
   },
-
-  // Recent Trips
   tripCard: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     borderRadius: RADIUS.md,
     padding: SPACING.md,
     marginBottom: SPACING.sm,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: colors.border,
     ...SHADOW.sm,
   },
   tripLeft: {
@@ -416,7 +404,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: RADIUS.md,
-    backgroundColor: COLORS.inputBg,
+    backgroundColor: colors.inputBg,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -426,17 +414,17 @@ const styles = StyleSheet.create({
   tripName: {
     fontSize: FONTSIZE.md,
     fontFamily: FONTS.medium,
-    color: COLORS.textPrimary,
+    color: colors.textPrimary,
   },
   tripMeta: {
     fontSize: FONTSIZE.xs,
     fontFamily: FONTS.regular,
-    color: COLORS.textSecondary,
+    color: colors.textSecondary,
     marginTop: 2,
   },
   tripDuration: {
     fontSize: FONTSIZE.sm,
     fontFamily: FONTS.medium,
-    color: COLORS.textSecondary,
+    color: colors.textSecondary,
   },
 });
