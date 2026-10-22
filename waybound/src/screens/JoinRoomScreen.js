@@ -3,23 +3,24 @@ import {
   View, Text, StyleSheet, TouchableOpacity,
   TextInput, StatusBar, ScrollView, Keyboard
 } from "react-native";
-import {SafeAreaView} from "react-native-safe-area-context";
-import { COLORS, FONTS, RADIUS, SPACING, FONTSIZE, SHADOW } from "../constants/theme";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { FONTS, RADIUS, SPACING, FONTSIZE, SHADOW } from "../constants/theme";
 import { useTheme } from "../context/ThemeContext";
 
-const { colors, isDark } = useTheme();
 const RECENT_CODES = [
-  { id: "1", name: "Coastal Ride", code: "WB-K7NP", members: 4, icon: "🚴" },
+  { id: "1", name: "Coastal Ride",  code: "WB-K7NP", members: 4, icon: "🚴" },
   { id: "2", name: "Mountain Loop", code: "WB-3QXM", members: 6, icon: "🥾" },
 ];
 
 export default function JoinRoomScreen({ navigation }) {
+  const { isDark, colors } = useTheme();
+  const s = makeStyles(colors);
+
   const [code, setCode] = useState("");
   const [error, setError] = useState("");
   const inputRef = useRef(null);
 
   const handleCodeChange = (text) => {
-    // Auto format to WB-XXXX
     let cleaned = text.toUpperCase().replace(/[^A-Z0-9-]/g, "");
     if (cleaned.length > 7) cleaned = cleaned.slice(0, 7);
     setCode(cleaned);
@@ -36,7 +37,6 @@ export default function JoinRoomScreen({ navigation }) {
       setError("Invalid code format. Should look like WB-K7NP.");
       return;
     }
-    // Navigate to live tracking (backend validation comes later)
     navigation.navigate("LiveTracking");
   };
 
@@ -46,45 +46,45 @@ export default function JoinRoomScreen({ navigation }) {
   };
 
   return (
-    <SafeAreaView style={styles.root}>
-      <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
+    <SafeAreaView style={s.root}>
+      <StatusBar
+        barStyle={isDark ? "light-content" : "dark-content"}
+        backgroundColor={colors.background}
+      />
 
       {/* ── Top Bar ── */}
-      <View style={styles.topBar}>
-        <TouchableOpacity
-          style={styles.backBtn}
-          onPress={() => navigation.goBack()}
-        >
-          <Text style={styles.backArrow}>←</Text>
+      <View style={s.topBar}>
+        <TouchableOpacity style={s.backBtn} onPress={() => navigation.goBack()}>
+          <Text style={s.backArrow}>←</Text>
         </TouchableOpacity>
-        <Text style={styles.topBarTitle}>Join Room</Text>
+        <Text style={s.topBarTitle}>Join Room</Text>
         <View style={{ width: 40 }} />
       </View>
 
       <ScrollView
-        contentContainerStyle={styles.scroll}
+        contentContainerStyle={s.scroll}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
 
         {/* ── Hero ── */}
-        <View style={styles.heroSection}>
-          <View style={styles.heroIconCircle}>
-            <Text style={styles.heroIcon}>🔗</Text>
+        <View style={s.heroSection}>
+          <View style={s.heroIconCircle}>
+            <Text style={s.heroIcon}>🔗</Text>
           </View>
-          <Text style={styles.heroTitle}>Enter Room Code</Text>
-          <Text style={styles.heroSub}>
+          <Text style={s.heroTitle}>Enter Room Code</Text>
+          <Text style={s.heroSub}>
             Ask your group leader for the code and type it below.
           </Text>
         </View>
 
         {/* ── Code Input ── */}
-        <View style={styles.inputWrapper}>
+        <View style={s.inputWrapper}>
           <TextInput
             ref={inputRef}
-            style={[styles.codeInput, error ? styles.codeInputError : null]}
+            style={[s.codeInput, error ? s.codeInputError : null]}
             placeholder="WB-XXXX"
-            placeholderTextColor={COLORS.textMuted}
+            placeholderTextColor={colors.textMuted}
             value={code}
             onChangeText={handleCodeChange}
             autoCapitalize="characters"
@@ -92,9 +92,9 @@ export default function JoinRoomScreen({ navigation }) {
             maxLength={7}
           />
           {error ? (
-            <Text style={styles.errorText}>⚠️ {error}</Text>
+            <Text style={s.errorText}>⚠️ {error}</Text>
           ) : (
-            <Text style={styles.inputHint}>
+            <Text style={s.inputHint}>
               Codes always start with WB- followed by 4 characters.
             </Text>
           )}
@@ -102,42 +102,39 @@ export default function JoinRoomScreen({ navigation }) {
 
         {/* ── Join Button ── */}
         <TouchableOpacity
-          style={[
-            styles.joinBtn,
-            code.length < 7 && styles.joinBtnDisabled
-          ]}
+          style={[s.joinBtn, code.length < 7 && s.joinBtnDisabled]}
           onPress={handleJoin}
           disabled={code.length < 7}
         >
-          <Text style={styles.joinBtnText}>Join Room →</Text>
+          <Text style={s.joinBtnText}>Join Room →</Text>
         </TouchableOpacity>
 
         {/* ── Divider ── */}
-        <View style={styles.dividerRow}>
-          <View style={styles.dividerLine} />
-          <Text style={styles.dividerText}>or pick a recent room</Text>
-          <View style={styles.dividerLine} />
+        <View style={s.dividerRow}>
+          <View style={s.dividerLine} />
+          <Text style={s.dividerText}>or pick a recent room</Text>
+          <View style={s.dividerLine} />
         </View>
 
         {/* ── Recent Rooms ── */}
         {RECENT_CODES.map((room) => (
           <TouchableOpacity
             key={room.id}
-            style={styles.recentCard}
+            style={s.recentCard}
             onPress={() => handleRecentJoin(room.code)}
           >
-            <View style={styles.recentLeft}>
-              <View style={styles.recentIconCircle}>
-                <Text style={styles.recentIcon}>{room.icon}</Text>
+            <View style={s.recentLeft}>
+              <View style={s.recentIconCircle}>
+                <Text style={s.recentIcon}>{room.icon}</Text>
               </View>
               <View>
-                <Text style={styles.recentName}>{room.name}</Text>
-                <Text style={styles.recentMeta}>
+                <Text style={s.recentName}>{room.name}</Text>
+                <Text style={s.recentMeta}>
                   {room.code} · {room.members} members
                 </Text>
               </View>
             </View>
-            <Text style={styles.recentArrow}>→</Text>
+            <Text style={s.recentArrow}>→</Text>
           </TouchableOpacity>
         ))}
 
@@ -146,50 +143,45 @@ export default function JoinRoomScreen({ navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors) => StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: COLORS.background,
+    backgroundColor: colors.background,
   },
-
-  // Top Bar
   topBar: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.md,
-    backgroundColor: COLORS.background,
+    backgroundColor: colors.background,
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
+    borderBottomColor: colors.border,
   },
   backBtn: {
     width: 40,
     height: 40,
     borderRadius: RADIUS.md,
-    backgroundColor: COLORS.inputBg,
+    backgroundColor: colors.inputBg,
     alignItems: "center",
     justifyContent: "center",
   },
   backArrow: {
     fontSize: FONTSIZE.xl,
-    color: COLORS.textPrimary,
+    color: colors.textPrimary,
     fontFamily: FONTS.medium,
   },
   topBarTitle: {
     fontSize: FONTSIZE.lg,
     fontFamily: FONTS.bold,
-    color: COLORS.textPrimary,
+    color: colors.textPrimary,
   },
-
   scroll: {
     flexGrow: 1,
     paddingHorizontal: SPACING.lg,
     paddingTop: SPACING.lg,
     paddingBottom: SPACING.xxl,
   },
-
-  // Hero
   heroSection: {
     alignItems: "center",
     marginBottom: SPACING.xl,
@@ -198,67 +190,61 @@ const styles = StyleSheet.create({
     width: 72,
     height: 72,
     borderRadius: RADIUS.xl,
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: SPACING.md,
     ...SHADOW.md,
   },
-  heroIcon: {
-    fontSize: 36,
-  },
+  heroIcon: { fontSize: 36 },
   heroTitle: {
     fontSize: FONTSIZE.xxl,
     fontFamily: FONTS.bold,
-    color: COLORS.textPrimary,
+    color: colors.textPrimary,
     marginBottom: SPACING.xs,
   },
   heroSub: {
     fontSize: FONTSIZE.md,
     fontFamily: FONTS.regular,
-    color: COLORS.textSecondary,
+    color: colors.textSecondary,
     textAlign: "center",
     lineHeight: 22,
   },
-
-  // Code Input
   inputWrapper: {
     marginBottom: SPACING.lg,
   },
   codeInput: {
-    backgroundColor: COLORS.inputBg,
+    backgroundColor: colors.inputBg,
     borderRadius: RADIUS.lg,
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.md,
     fontSize: FONTSIZE.huge,
     fontFamily: FONTS.bold,
-    color: COLORS.primary,
+    color: colors.primary,
     borderWidth: 2,
-    borderColor: COLORS.border,
+    borderColor: colors.border,
     textAlign: "center",
     letterSpacing: 4,
   },
   codeInputError: {
-    borderColor: COLORS.danger,
+    borderColor: colors.danger,
   },
   inputHint: {
     fontSize: FONTSIZE.xs,
     fontFamily: FONTS.regular,
-    color: COLORS.textMuted,
+    color: colors.textMuted,
     textAlign: "center",
     marginTop: SPACING.sm,
   },
   errorText: {
     fontSize: FONTSIZE.sm,
     fontFamily: FONTS.medium,
-    color: COLORS.danger,
+    color: colors.danger,
     textAlign: "center",
     marginTop: SPACING.sm,
   },
-
-  // Join Button
   joinBtn: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: colors.primary,
     borderRadius: RADIUS.lg,
     paddingVertical: SPACING.md,
     alignItems: "center",
@@ -266,15 +252,13 @@ const styles = StyleSheet.create({
     ...SHADOW.md,
   },
   joinBtnDisabled: {
-    backgroundColor: COLORS.border,
+    backgroundColor: colors.border,
   },
   joinBtnText: {
     fontSize: FONTSIZE.lg,
     fontFamily: FONTS.bold,
-    color: COLORS.textWhite,
+    color: colors.textWhite,
   },
-
-  // Divider
   dividerRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -283,26 +267,24 @@ const styles = StyleSheet.create({
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: COLORS.border,
+    backgroundColor: colors.border,
   },
   dividerText: {
     fontSize: FONTSIZE.sm,
     fontFamily: FONTS.regular,
-    color: COLORS.textMuted,
+    color: colors.textMuted,
     marginHorizontal: SPACING.sm,
   },
-
-  // Recent Cards
   recentCard: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     borderRadius: RADIUS.md,
     padding: SPACING.md,
     marginBottom: SPACING.sm,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: colors.border,
     ...SHADOW.sm,
   },
   recentLeft: {
@@ -314,27 +296,25 @@ const styles = StyleSheet.create({
     width: 42,
     height: 42,
     borderRadius: RADIUS.md,
-    backgroundColor: COLORS.inputBg,
+    backgroundColor: colors.inputBg,
     alignItems: "center",
     justifyContent: "center",
   },
-  recentIcon: {
-    fontSize: 20,
-  },
+  recentIcon: { fontSize: 20 },
   recentName: {
     fontSize: FONTSIZE.md,
     fontFamily: FONTS.medium,
-    color: COLORS.textPrimary,
+    color: colors.textPrimary,
   },
   recentMeta: {
     fontSize: FONTSIZE.xs,
     fontFamily: FONTS.regular,
-    color: COLORS.textSecondary,
+    color: colors.textSecondary,
     marginTop: 2,
   },
   recentArrow: {
     fontSize: FONTSIZE.lg,
-    color: COLORS.textMuted,
+    color: colors.textMuted,
     fontFamily: FONTS.medium,
   },
 });

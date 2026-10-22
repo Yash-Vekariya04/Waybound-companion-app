@@ -1,37 +1,37 @@
 import React, { useState, useEffect } from "react";
 import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  StatusBar,
-  Dimensions,
-  ScrollView,
-  ActivityIndicator,
+  View, Text, StyleSheet, TouchableOpacity,
+  StatusBar, Dimensions, ScrollView, ActivityIndicator
 } from "react-native";
 import { WebView } from "react-native-webview";
 import * as Location from "expo-location";
 import { SafeAreaView } from "react-native-safe-area-context";
-import {
-  COLORS,
-  FONTS,
-  RADIUS,
-  SPACING,
-  FONTSIZE,
-  SHADOW,
-} from "../constants/theme";
-import { getLeafletHTML } from "../utils/leafletMap";
+import { FONTS, RADIUS, SPACING, FONTSIZE, SHADOW, COLORS } from "../constants/theme";
 import { useTheme } from "../context/ThemeContext";
+import { getLeafletHTML } from "../utils/leafletMap";
 
-const { colors, isDark } = useTheme();
 const { width, height } = Dimensions.get("window");
 
 export default function LiveTrackingScreen({ navigation }) {
+  const { isDark, colors } = useTheme();
+  const s = makeStyles(colors);
+
   const [location, setLocation] = useState(null);
   const [permissionDenied, setPermissionDenied] = useState(false);
   const [loading, setLoading] = useState(true);
   const [panelExpanded, setPanelExpanded] = useState(false);
-  const [members, setMembers] = useState([]);
+  const [members, setMembers] = useState([
+    {
+      id: "2",
+      name: "Aryan",
+      initials: "A",
+      color: "#8e44ad",
+      lat: 0.001,
+      lng: 0.001,
+      speed: "16 km/h",
+      status: "moving",
+    },
+  ]);
 
   useEffect(() => {
     (async () => {
@@ -50,7 +50,7 @@ export default function LiveTrackingScreen({ navigation }) {
           ...m,
           lat: loc.coords.latitude + m.lat,
           lng: loc.coords.longitude + m.lng,
-        })),
+        }))
       );
       setLoading(false);
     })();
@@ -65,17 +65,7 @@ export default function LiveTrackingScreen({ navigation }) {
           color: COLORS.primary,
           lat: location.latitude,
           lng: location.longitude,
-          speed: "18 km/h",
-          status: "moving",
-        },
-        {
-          id: "2",
-          name: "Aryan",
-          initials: "A",
-          color: "#8e44ad",
-          lat: 0.001,
-          lng: 0.001,
-          speed: "16 km/h",
+          speed: "—",
           status: "moving",
         },
         ...members,
@@ -84,98 +74,76 @@ export default function LiveTrackingScreen({ navigation }) {
 
   if (loading) {
     return (
-      <View style={styles.centered}>
-        <ActivityIndicator size="large" color={COLORS.primary} />
-        <Text style={styles.loadingText}>Getting your location...</Text>
+      <View style={s.centered}>
+        <ActivityIndicator size="large" color={colors.primary} />
+        <Text style={s.loadingText}>Getting your location...</Text>
       </View>
     );
   }
 
   if (permissionDenied) {
     return (
-      <View style={styles.centered}>
-        <Text style={styles.permissionEmoji}>📍</Text>
-        <Text style={styles.permissionTitle}>Location Access Needed</Text>
-        <Text style={styles.permissionSub}>
+      <View style={s.centered}>
+        <Text style={s.permissionEmoji}>📍</Text>
+        <Text style={s.permissionTitle}>Location Access Needed</Text>
+        <Text style={s.permissionSub}>
           Waybound needs your location to show you and your group on the map.
         </Text>
-        <TouchableOpacity
-          style={styles.goBackBtn}
-          onPress={() => navigation.goBack()}
-        >
-          <Text style={styles.goBackBtnText}>Go Back</Text>
+        <TouchableOpacity style={s.goBackBtn} onPress={() => navigation.goBack()}>
+          <Text style={s.goBackBtnText}>Go Back</Text>
         </TouchableOpacity>
       </View>
     );
   }
 
   return (
-    <View style={styles.root}>
-      <StatusBar
-        barStyle="dark-content"
-        backgroundColor="transparent"
-        translucent
-      />
+    <View style={s.root}>
+      <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
 
       {/* ── Leaflet Map ── */}
       <WebView
-        style={styles.map}
-        source={{
-          html: getLeafletHTML(location.latitude, location.longitude, members),
-        }}
+        style={s.map}
+        source={{ html: getLeafletHTML(location.latitude, location.longitude, members) }}
         scrollEnabled={false}
         javaScriptEnabled={true}
       />
 
       {/* ── Top Bar Overlay ── */}
-      <SafeAreaView style={styles.topOverlay} edges={["top"]}>
-        <View style={styles.topBar}>
-          <TouchableOpacity
-            style={styles.topBtn}
-            onPress={() => navigation.goBack()}
-          >
-            <Text style={styles.topBtnText}>←</Text>
+      <SafeAreaView style={s.topOverlay} edges={["top"]}>
+        <View style={s.topBar}>
+          <TouchableOpacity style={s.topBtn} onPress={() => navigation.goBack()}>
+            <Text style={s.topBtnText}>←</Text>
           </TouchableOpacity>
-
-          <View style={styles.roomBadge}>
-            <View style={styles.liveDot} />
-            <Text style={styles.roomBadgeText}>
+          <View style={s.roomBadge}>
+            <View style={s.liveDot} />
+            <Text style={s.roomBadgeText}>
               Coastal Ride · {allMembers.length}{" "}
               {allMembers.length === 1 ? "member" : "members"}
             </Text>
           </View>
-
-          <TouchableOpacity
-            style={styles.topBtn}
-            onPress={() => navigation.navigate("Settings")}
-          >
-            <Text style={styles.topBtnText}>⋮</Text>
+          <TouchableOpacity style={s.topBtn} onPress={() => navigation.navigate("Settings")}>
+            <Text style={s.topBtnText}>⋮</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
 
       {/* ── SOS FAB ── */}
       <TouchableOpacity
-        style={styles.sosBtn}
+        style={s.sosBtn}
         onPress={() => navigation.navigate("SafetyAlert")}
       >
-        <Text style={styles.sosBtnText}>🚨</Text>
+        <Text style={s.sosBtnText}>🚨</Text>
       </TouchableOpacity>
 
       {/* ── Bottom Members Panel ── */}
-      <View
-        style={[
-          styles.bottomPanel,
-          panelExpanded && styles.bottomPanelExpanded,
-        ]}
-      >
+      <View style={[s.bottomPanel, panelExpanded && s.bottomPanelExpanded]}>
         <TouchableOpacity
-          style={styles.panelHandle}
+          style={s.panelHandle}
           onPress={() => setPanelExpanded((prev) => !prev)}
           activeOpacity={0.7}
         >
-          <View style={styles.handleBar} />
-          <Text style={styles.panelTitle}>
+          <View style={s.handleBar} />
+          <Text style={s.panelTitle}>
             {panelExpanded ? "▼  Members" : "▲  Members"}
           </Text>
         </TouchableOpacity>
@@ -185,9 +153,9 @@ export default function LiveTrackingScreen({ navigation }) {
           nestedScrollEnabled={true}
         >
           {allMembers.length === 0 ? (
-            <View style={styles.emptyMembers}>
-              <Text style={styles.emptyMembersEmoji}>👥</Text>
-              <Text style={styles.emptyMembersText}>
+            <View style={s.emptyMembers}>
+              <Text style={s.emptyMembersEmoji}>👥</Text>
+              <Text style={s.emptyMembersText}>
                 No other members yet. Share your room code to invite your group.
               </Text>
             </View>
@@ -196,43 +164,33 @@ export default function LiveTrackingScreen({ navigation }) {
               <TouchableOpacity
                 key={member.id}
                 style={[
-                  styles.memberRow,
-                  index < allMembers.length - 1 && styles.memberRowBorder,
+                  s.memberRow,
+                  index < allMembers.length - 1 && s.memberRowBorder,
                 ]}
                 onPress={() => navigation.navigate("MemberDetail", { member })}
               >
-                <View
-                  style={[
-                    styles.memberAvatar,
-                    { backgroundColor: member.color },
-                  ]}
-                >
-                  <Text style={styles.memberAvatarText}>{member.initials}</Text>
+                <View style={[s.memberAvatar, { backgroundColor: member.color }]}>
+                  <Text style={s.memberAvatarText}>{member.initials}</Text>
                 </View>
-                <View style={styles.memberInfo}>
-                  <View style={styles.memberNameRow}>
-                    <Text style={styles.memberName}>{member.name}</Text>
+                <View style={s.memberInfo}>
+                  <View style={s.memberNameRow}>
+                    <Text style={s.memberName}>{member.name}</Text>
                     {member.id === "1" && (
-                      <View style={styles.youBadge}>
-                        <Text style={styles.youBadgeText}>You</Text>
+                      <View style={s.youBadge}>
+                        <Text style={s.youBadgeText}>You</Text>
                       </View>
                     )}
                   </View>
-                  <Text style={styles.memberSpeed}>{member.speed ?? "—"}</Text>
+                  <Text style={s.memberSpeed}>{member.speed ?? "—"}</Text>
                 </View>
-                <View
-                  style={[
-                    styles.memberStatusBadge,
-                    member.status === "stopped" && styles.memberStatusStopped,
-                  ]}
-                >
-                  <Text
-                    style={[
-                      styles.memberStatusText,
-                      member.status === "stopped" &&
-                        styles.memberStatusTextStopped,
-                    ]}
-                  >
+                <View style={[
+                  s.memberStatusBadge,
+                  member.status === "stopped" && s.memberStatusStopped,
+                ]}>
+                  <Text style={[
+                    s.memberStatusText,
+                    member.status === "stopped" && s.memberStatusTextStopped,
+                  ]}>
                     {member.status === "moving" ? "Moving" : "Stopped"}
                   </Text>
                 </View>
@@ -245,42 +203,42 @@ export default function LiveTrackingScreen({ navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors) => StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: COLORS.background,
+    backgroundColor: colors.background,
   },
   centered: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: COLORS.background,
+    backgroundColor: colors.background,
     paddingHorizontal: SPACING.xl,
   },
   loadingText: {
     marginTop: SPACING.md,
     fontSize: FONTSIZE.md,
     fontFamily: FONTS.regular,
-    color: COLORS.textSecondary,
+    color: colors.textSecondary,
   },
   permissionEmoji: { fontSize: 48, marginBottom: SPACING.md },
   permissionTitle: {
     fontSize: FONTSIZE.xl,
     fontFamily: FONTS.bold,
-    color: COLORS.textPrimary,
+    color: colors.textPrimary,
     marginBottom: SPACING.sm,
     textAlign: "center",
   },
   permissionSub: {
     fontSize: FONTSIZE.md,
     fontFamily: FONTS.regular,
-    color: COLORS.textSecondary,
+    color: colors.textSecondary,
     textAlign: "center",
     lineHeight: 22,
     marginBottom: SPACING.xl,
   },
   goBackBtn: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: colors.primary,
     borderRadius: RADIUS.lg,
     paddingVertical: SPACING.sm + 4,
     paddingHorizontal: SPACING.xl,
@@ -288,7 +246,7 @@ const styles = StyleSheet.create({
   goBackBtnText: {
     fontSize: FONTSIZE.md,
     fontFamily: FONTS.bold,
-    color: COLORS.textWhite,
+    color: colors.textWhite,
   },
   map: {
     width: width,
@@ -314,20 +272,20 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: RADIUS.md,
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     alignItems: "center",
     justifyContent: "center",
     ...SHADOW.sm,
   },
   topBtnText: {
     fontSize: FONTSIZE.xl,
-    color: COLORS.textPrimary,
+    color: colors.textPrimary,
     fontFamily: FONTS.bold,
   },
   roomBadge: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     borderRadius: RADIUS.full,
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.xs + 2,
@@ -343,7 +301,7 @@ const styles = StyleSheet.create({
   roomBadgeText: {
     fontSize: FONTSIZE.sm,
     fontFamily: FONTS.medium,
-    color: COLORS.textPrimary,
+    color: colors.textPrimary,
   },
   sosBtn: {
     position: "absolute",
@@ -363,7 +321,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     borderTopLeftRadius: RADIUS.xl,
     borderTopRightRadius: RADIUS.xl,
     paddingHorizontal: SPACING.lg,
@@ -382,13 +340,26 @@ const styles = StyleSheet.create({
     width: 36,
     height: 4,
     borderRadius: RADIUS.full,
-    backgroundColor: COLORS.border,
+    backgroundColor: colors.border,
     marginBottom: SPACING.xs,
   },
   panelTitle: {
     fontSize: FONTSIZE.sm,
     fontFamily: FONTS.medium,
-    color: COLORS.textSecondary,
+    color: colors.textSecondary,
+  },
+  emptyMembers: {
+    alignItems: "center",
+    paddingVertical: SPACING.lg,
+    gap: SPACING.sm,
+  },
+  emptyMembersEmoji: { fontSize: 32 },
+  emptyMembersText: {
+    fontSize: FONTSIZE.sm,
+    fontFamily: FONTS.regular,
+    color: colors.textSecondary,
+    textAlign: "center",
+    lineHeight: 20,
   },
   memberRow: {
     flexDirection: "row",
@@ -398,7 +369,7 @@ const styles = StyleSheet.create({
   },
   memberRowBorder: {
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
+    borderBottomColor: colors.border,
   },
   memberAvatar: {
     width: 38,
@@ -410,18 +381,34 @@ const styles = StyleSheet.create({
   memberAvatarText: {
     fontSize: FONTSIZE.md,
     fontFamily: FONTS.bold,
-    color: COLORS.textWhite,
+    color: colors.textWhite,
   },
   memberInfo: { flex: 1 },
+  memberNameRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: SPACING.xs,
+  },
   memberName: {
     fontSize: FONTSIZE.md,
     fontFamily: FONTS.medium,
-    color: COLORS.textPrimary,
+    color: colors.textPrimary,
+  },
+  youBadge: {
+    backgroundColor: COLORS.primary,
+    borderRadius: RADIUS.full,
+    paddingHorizontal: SPACING.xs + 2,
+    paddingVertical: 2,
+  },
+  youBadgeText: {
+    fontSize: FONTSIZE.xs,
+    fontFamily: FONTS.bold,
+    color: colors.textWhite,
   },
   memberSpeed: {
     fontSize: FONTSIZE.xs,
     fontFamily: FONTS.regular,
-    color: COLORS.textSecondary,
+    color: colors.textSecondary,
     marginTop: 2,
   },
   memberStatusBadge: {
@@ -440,36 +427,5 @@ const styles = StyleSheet.create({
   },
   memberStatusTextStopped: {
     color: COLORS.danger,
-  },
-  emptyMembers: {
-    alignItems: "center",
-    paddingVertical: SPACING.lg,
-    gap: SPACING.sm,
-  },
-  emptyMembersEmoji: {
-    fontSize: 32,
-  },
-  emptyMembersText: {
-    fontSize: FONTSIZE.sm,
-    fontFamily: FONTS.regular,
-    color: COLORS.textSecondary,
-    textAlign: "center",
-    lineHeight: 20,
-  },
-  memberNameRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: SPACING.xs,
-  },
-  youBadge: {
-    backgroundColor: COLORS.primary,
-    borderRadius: RADIUS.full,
-    paddingHorizontal: SPACING.xs + 2,
-    paddingVertical: 2,
-  },
-  youBadgeText: {
-    fontSize: FONTSIZE.xs,
-    fontFamily: FONTS.bold,
-    color: COLORS.textWhite,
   },
 });
