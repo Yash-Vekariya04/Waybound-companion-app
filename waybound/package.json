@@ -18,7 +18,8 @@
     "react-native-maps": "1.27.2",
     "react-native-reanimated": "4.5.1",
     "react-native-safe-area-context": "~5.7.0",
-    "react-native-screens": "~4.26.0"
+    "react-native-screens": "~4.26.0",
+    "react-native-webview": "^14.0.1"
   },
   "scripts": {
     "start": "expo start",
