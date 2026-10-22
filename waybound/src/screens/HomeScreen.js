@@ -1,8 +1,9 @@
 import React, { useState } from "react";
 import {
   View, Text, StyleSheet, ScrollView,
-  TouchableOpacity, StatusBar, SafeAreaView
+  TouchableOpacity, StatusBar
 } from "react-native";
+import {SafeAreaView} from "react-native-safe-area-context";
 import { COLORS, FONTS, RADIUS, SPACING, FONTSIZE, SHADOW } from "../constants/theme";
 
 const RECENT_TRIPS = [
