@@ -1,29 +1,35 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import {
-  View, Text, StyleSheet, TouchableOpacity,
-  StatusBar, Dimensions, ScrollView, ActivityIndicator
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  StatusBar,
+  Dimensions,
+  ScrollView,
+  ActivityIndicator,
 } from "react-native";
-import MapView, { Marker, Circle } from "react-native-maps";
+import { WebView } from "react-native-webview";
 import * as Location from "expo-location";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { COLORS, FONTS, RADIUS, SPACING, FONTSIZE, SHADOW } from "../constants/theme";
+import {
+  COLORS,
+  FONTS,
+  RADIUS,
+  SPACING,
+  FONTSIZE,
+  SHADOW,
+} from "../constants/theme";
+import { getLeafletHTML } from "../utils/leafletMap";
 
 const { width, height } = Dimensions.get("window");
 
-const MOCK_MEMBERS = [
-  { id: "1", name: "Yash",    initials: "Y", color: COLORS.primary,   lat: 0,      lng: 0,      speed: "18 km/h", status: "moving"  },
-  { id: "2", name: "Aryan",   initials: "A", color: "#8e44ad",         lat: 0.001,  lng: 0.001,  speed: "16 km/h", status: "moving"  },
-  { id: "3", name: "Priya",   initials: "P", color: "#e67e22",         lat: -0.001, lng: 0.0015, speed: "0 km/h",  status: "stopped" },
-  { id: "4", name: "Rahul",   initials: "R", color: "#c0392b",         lat: 0.002,  lng: -0.001, speed: "20 km/h", status: "moving"  },
-];
-
 export default function LiveTrackingScreen({ navigation }) {
-  const mapRef = useRef(null);
   const [location, setLocation] = useState(null);
   const [permissionDenied, setPermissionDenied] = useState(false);
   const [loading, setLoading] = useState(true);
   const [panelExpanded, setPanelExpanded] = useState(false);
-  const [members, setMembers] = useState(MOCK_MEMBERS);
+  const [members, setMembers] = useState([]);
 
   useEffect(() => {
     (async () => {
@@ -37,29 +43,25 @@ export default function LiveTrackingScreen({ navigation }) {
         accuracy: Location.Accuracy.High,
       });
       setLocation(loc.coords);
-
-      // Offset mock members relative to real location
-      setMembers((prev) =>
-        prev.map((m) => ({
-          ...m,
-          lat: loc.coords.latitude + m.lat,
-          lng: loc.coords.longitude + m.lng,
-        }))
-      );
       setLoading(false);
     })();
   }, []);
 
-  const centerOnMe = () => {
-    if (location && mapRef.current) {
-      mapRef.current.animateToRegion({
-        latitude: location.latitude,
-        longitude: location.longitude,
-        latitudeDelta: 0.01,
-        longitudeDelta: 0.01,
-      }, 800);
-    }
-  };
+  const allMembers = location
+    ? [
+        {
+          id: "1",
+          name: "Yash",
+          initials: "Y",
+          color: COLORS.primary,
+          lat: location.latitude,
+          lng: location.longitude,
+          speed: "18 km/h",
+          status: "moving",
+        },
+        ...members,
+      ]
+    : [];
 
   if (loading) {
     return (
@@ -90,61 +92,21 @@ export default function LiveTrackingScreen({ navigation }) {
 
   return (
     <View style={styles.root}>
-      <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
+      <StatusBar
+        barStyle="dark-content"
+        backgroundColor="transparent"
+        translucent
+      />
 
-      {/* ── Map ── */}
-      <MapView
-        ref={mapRef}
+      {/* ── Leaflet Map ── */}
+      <WebView
         style={styles.map}
-        initialRegion={{
-          latitude: location.latitude,
-          longitude: location.longitude,
-          latitudeDelta: 0.015,
-          longitudeDelta: 0.015,
+        source={{
+          html: getLeafletHTML(location.latitude, location.longitude, members),
         }}
-        showsUserLocation={false}
-        showsMyLocationButton={false}
-        showsCompass={false}
-      >
-        {/* My Location Marker */}
-        <Marker
-          coordinate={{
-            latitude: location.latitude,
-            longitude: location.longitude,
-          }}
-          anchor={{ x: 0.5, y: 0.5 }}
-        >
-          <View style={styles.myMarker}>
-            <View style={styles.myMarkerInner} />
-          </View>
-        </Marker>
-
-        {/* Accuracy Circle */}
-        <Circle
-          center={{
-            latitude: location.latitude,
-            longitude: location.longitude,
-          }}
-          radius={80}
-          fillColor="rgba(10,143,127,0.1)"
-          strokeColor="rgba(10,143,127,0.3)"
-          strokeWidth={1}
-        />
-
-        {/* Member Markers */}
-        {members.slice(1).map((member) => (
-          <Marker
-            key={member.id}
-            coordinate={{ latitude: member.lat, longitude: member.lng }}
-            anchor={{ x: 0.5, y: 0.5 }}
-            onPress={() => navigation.navigate("MemberDetail")}
-          >
-            <View style={[styles.memberMarker, { backgroundColor: member.color }]}>
-              <Text style={styles.memberMarkerText}>{member.initials}</Text>
-            </View>
-          </Marker>
-        ))}
-      </MapView>
+        scrollEnabled={false}
+        javaScriptEnabled={true}
+      />
 
       {/* ── Top Bar Overlay ── */}
       <SafeAreaView style={styles.topOverlay} edges={["top"]}>
@@ -158,7 +120,10 @@ export default function LiveTrackingScreen({ navigation }) {
 
           <View style={styles.roomBadge}>
             <View style={styles.liveDot} />
-            <Text style={styles.roomBadgeText}>Coastal Ride · 4 members</Text>
+            <Text style={styles.roomBadgeText}>
+              Coastal Ride · {allMembers.length}{" "}
+              {allMembers.length === 1 ? "member" : "members"}
+            </Text>
           </View>
 
           <TouchableOpacity
@@ -170,12 +135,7 @@ export default function LiveTrackingScreen({ navigation }) {
         </View>
       </SafeAreaView>
 
-      {/* ── Center on Me Button ── */}
-      <TouchableOpacity style={styles.centerBtn} onPress={centerOnMe}>
-        <Text style={styles.centerBtnText}>◎</Text>
-      </TouchableOpacity>
-
-      {/* ── Safety Alert FAB ── */}
+      {/* ── SOS FAB ── */}
       <TouchableOpacity
         style={styles.sosBtn}
         onPress={() => navigation.navigate("SafetyAlert")}
@@ -184,54 +144,77 @@ export default function LiveTrackingScreen({ navigation }) {
       </TouchableOpacity>
 
       {/* ── Bottom Members Panel ── */}
-      <View style={[styles.bottomPanel, panelExpanded && styles.bottomPanelExpanded]}>
-
-        {/* Panel Handle */}
+      <View
+        style={[
+          styles.bottomPanel,
+          panelExpanded && styles.bottomPanelExpanded,
+        ]}
+      >
         <TouchableOpacity
           style={styles.panelHandle}
-          onPress={() => setPanelExpanded(!panelExpanded)}
+          onPress={() => setPanelExpanded((prev) => !prev)}
+          activeOpacity={0.7}
         >
           <View style={styles.handleBar} />
           <Text style={styles.panelTitle}>
-            {panelExpanded ? "▼ Members" : "▲ Members"}
+            {panelExpanded ? "▼  Members" : "▲  Members"}
           </Text>
         </TouchableOpacity>
 
         <ScrollView
           showsVerticalScrollIndicator={false}
-          scrollEnabled={panelExpanded}
+          nestedScrollEnabled={true}
         >
-          {members.map((member, index) => (
-            <TouchableOpacity
-              key={member.id}
-              style={[
-                styles.memberRow,
-                index < members.length - 1 && styles.memberRowBorder,
-              ]}
-              onPress={() => navigation.navigate("MemberDetail")}
-            >
-              <View style={[styles.memberAvatar, { backgroundColor: member.color }]}>
-                <Text style={styles.memberAvatarText}>{member.initials}</Text>
-              </View>
-              <View style={styles.memberInfo}>
-                <Text style={styles.memberName}>
-                  {member.name} {member.id === "1" ? "(You)" : ""}
-                </Text>
-                <Text style={styles.memberSpeed}>{member.speed}</Text>
-              </View>
-              <View style={[
-                styles.memberStatusBadge,
-                member.status === "stopped" && styles.memberStatusStopped
-              ]}>
-                <Text style={[
-                  styles.memberStatusText,
-                  member.status === "stopped" && styles.memberStatusTextStopped
-                ]}>
-                  {member.status === "moving" ? "Moving" : "Stopped"}
-                </Text>
-              </View>
-            </TouchableOpacity>
-          ))}
+          {allMembers.length === 1 ? (
+            <View style={styles.emptyMembers}>
+              <Text style={styles.emptyMembersEmoji}>👥</Text>
+              <Text style={styles.emptyMembersText}>
+                No other members yet. Share your room code to invite your group.
+              </Text>
+            </View>
+          ) : (
+            allMembers.map((member, index) => (
+              <TouchableOpacity
+                key={member.id}
+                style={[
+                  styles.memberRow,
+                  index < allMembers.length - 1 && styles.memberRowBorder,
+                ]}
+                onPress={() => navigation.navigate("MemberDetail")}
+              >
+                <View
+                  style={[
+                    styles.memberAvatar,
+                    { backgroundColor: member.color },
+                  ]}
+                >
+                  <Text style={styles.memberAvatarText}>{member.initials}</Text>
+                </View>
+                <View style={styles.memberInfo}>
+                  <Text style={styles.memberName}>
+                    {member.name} {member.id === "1" ? "(You)" : ""}
+                  </Text>
+                  <Text style={styles.memberSpeed}>{member.speed ?? "—"}</Text>
+                </View>
+                <View
+                  style={[
+                    styles.memberStatusBadge,
+                    member.status === "stopped" && styles.memberStatusStopped,
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.memberStatusText,
+                      member.status === "stopped" &&
+                        styles.memberStatusTextStopped,
+                    ]}
+                  >
+                    {member.status === "moving" ? "Moving" : "Stopped"}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            ))
+          )}
         </ScrollView>
       </View>
     </View>
@@ -243,8 +226,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.background,
   },
-
-  // Loading / Permission
   centered: {
     flex: 1,
     alignItems: "center",
@@ -258,10 +239,7 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.regular,
     color: COLORS.textSecondary,
   },
-  permissionEmoji: {
-    fontSize: 48,
-    marginBottom: SPACING.md,
-  },
+  permissionEmoji: { fontSize: 48, marginBottom: SPACING.md },
   permissionTitle: {
     fontSize: FONTSIZE.xl,
     fontFamily: FONTS.bold,
@@ -288,8 +266,6 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.bold,
     color: COLORS.textWhite,
   },
-
-  // Map
   map: {
     width: width,
     height: height,
@@ -297,43 +273,6 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
   },
-
-  // My Marker
-  myMarker: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    backgroundColor: "rgba(10,143,127,0.25)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  myMarkerInner: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: COLORS.primary,
-    borderWidth: 2,
-    borderColor: COLORS.textWhite,
-  },
-
-  // Member Markers
-  memberMarker: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 2,
-    borderColor: COLORS.textWhite,
-    ...SHADOW.sm,
-  },
-  memberMarkerText: {
-    fontSize: FONTSIZE.sm,
-    fontFamily: FONTS.bold,
-    color: COLORS.textWhite,
-  },
-
-  // Top Overlay
   topOverlay: {
     position: "absolute",
     top: 0,
@@ -382,30 +321,10 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.medium,
     color: COLORS.textPrimary,
   },
-
-  // Center Button
-  centerBtn: {
-    position: "absolute",
-    right: SPACING.md,
-    bottom: 240,
-    width: 44,
-    height: 44,
-    borderRadius: RADIUS.md,
-    backgroundColor: COLORS.surface,
-    alignItems: "center",
-    justifyContent: "center",
-    ...SHADOW.md,
-  },
-  centerBtnText: {
-    fontSize: FONTSIZE.xl,
-    color: COLORS.primary,
-  },
-
-  // SOS FAB
   sosBtn: {
     position: "absolute",
     right: SPACING.md,
-    bottom: 300,
+    bottom: 240,
     width: 52,
     height: 52,
     borderRadius: RADIUS.full,
@@ -414,11 +333,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     ...SHADOW.lg,
   },
-  sosBtnText: {
-    fontSize: 24,
-  },
-
-  // Bottom Panel
+  sosBtnText: { fontSize: 24 },
   bottomPanel: {
     position: "absolute",
     bottom: 0,
@@ -451,8 +366,6 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.medium,
     color: COLORS.textSecondary,
   },
-
-  // Member Row
   memberRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -475,9 +388,7 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.bold,
     color: COLORS.textWhite,
   },
-  memberInfo: {
-    flex: 1,
-  },
+  memberInfo: { flex: 1 },
   memberName: {
     fontSize: FONTSIZE.md,
     fontFamily: FONTS.medium,
@@ -505,5 +416,20 @@ const styles = StyleSheet.create({
   },
   memberStatusTextStopped: {
     color: COLORS.danger,
+  },
+  emptyMembers: {
+    alignItems: "center",
+    paddingVertical: SPACING.lg,
+    gap: SPACING.sm,
+  },
+  emptyMembersEmoji: {
+    fontSize: 32,
+  },
+  emptyMembersText: {
+    fontSize: FONTSIZE.sm,
+    fontFamily: FONTS.regular,
+    color: COLORS.textSecondary,
+    textAlign: "center",
+    lineHeight: 20,
   },
 });
