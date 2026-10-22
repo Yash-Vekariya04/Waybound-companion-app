@@ -18,7 +18,9 @@ import {
   FONTSIZE,
   SHADOW,
 } from "../constants/theme";
+import { useTheme } from "../context/ThemeContext";
 
+const { colors, isDark } = useTheme();
 const ROOM_ICONS = ["🚴", "🏍️", "🚗", "🥾", "⛵", "🏕️"];
 
 export default function CreateRoomScreen({ navigation }) {

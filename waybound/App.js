@@ -4,6 +4,7 @@ import { View, ActivityIndicator } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import AppNavigator from "./src/navigation/AppNavigator";
 import { COLORS } from "./src/constants/theme";
+import { ThemeProvider } from "./src/context/ThemeContext";
 
 export default function App() {
   const [fontsLoaded] = useFonts({
@@ -21,8 +22,10 @@ export default function App() {
   }
 
   return (
-    <SafeAreaProvider>
+  <SafeAreaProvider>
+    <ThemeProvider>
       <AppNavigator />
-    </SafeAreaProvider>
-  );
+    </ThemeProvider>
+  </SafeAreaProvider>
+);
 }

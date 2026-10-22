@@ -5,7 +5,9 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS, FONTS, RADIUS, SPACING, FONTSIZE, SHADOW } from "../constants/theme";
+import { useTheme } from "../context/ThemeContext";
 
+const { colors, isDark } = useTheme();
 const ALERT_TYPES = [
   {
     id: "sos",

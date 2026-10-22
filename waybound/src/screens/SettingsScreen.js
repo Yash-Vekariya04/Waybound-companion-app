@@ -1,19 +1,23 @@
 import React, { useState } from "react";
 import {
   View, Text, StyleSheet, TouchableOpacity,
-  StatusBar, ScrollView, Switch, Alert
+  StatusBar, ScrollView, Switch, Alert, Linking
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { COLORS, FONTS, RADIUS, SPACING, FONTSIZE, SHADOW } from "../constants/theme";
+import { FONTS, RADIUS, SPACING, FONTSIZE, SHADOW } from "../constants/theme";
+import { useTheme } from "../context/ThemeContext";
 
 const VERSION = "1.0.0";
 
 export default function SettingsScreen({ navigation }) {
-  const [notifications, setNotifications]     = useState(true);
-  const [sosAlerts, setSosAlerts]             = useState(true);
-  const [memberJoin, setMemberJoin]           = useState(true);
-  const [shareLocation, setShareLocation]     = useState(true);
-  const [highAccuracy, setHighAccuracy]       = useState(true);
+  const { isDark, toggleTheme, colors } = useTheme();
+  const s = makeStyles(colors);
+
+  const [notifications, setNotifications]           = useState(true);
+  const [sosAlerts, setSosAlerts]                   = useState(true);
+  const [memberJoin, setMemberJoin]                 = useState(true);
+  const [shareLocation, setShareLocation]           = useState(true);
+  const [highAccuracy, setHighAccuracy]             = useState(true);
   const [backgroundLocation, setBackgroundLocation] = useState(false);
 
   const handleLogout = () => {
@@ -37,232 +41,253 @@ export default function SettingsScreen({ navigation }) {
       "This will permanently delete your account and all your data. This cannot be undone.",
       [
         { text: "Cancel", style: "cancel" },
-        {
-          text: "Delete",
-          style: "destructive",
-          onPress: () => {},
-        },
+        { text: "Delete", style: "destructive", onPress: () => {} },
       ]
     );
   };
 
   return (
-    <SafeAreaView style={styles.root}>
-      <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
+    <SafeAreaView style={s.root}>
+      <StatusBar
+        barStyle={isDark ? "light-content" : "dark-content"}
+        backgroundColor={colors.background}
+      />
 
       {/* ── Top Bar ── */}
-      <View style={styles.topBar}>
-        <TouchableOpacity
-          style={styles.backBtn}
-          onPress={() => navigation.goBack()}
-        >
-          <Text style={styles.backArrow}>←</Text>
+      <View style={s.topBar}>
+        <TouchableOpacity style={s.backBtn} onPress={() => navigation.goBack()}>
+          <Text style={s.backArrow}>←</Text>
         </TouchableOpacity>
-        <Text style={styles.topBarTitle}>Settings</Text>
+        <Text style={s.topBarTitle}>Settings</Text>
         <View style={{ width: 40 }} />
       </View>
 
       <ScrollView
-        contentContainerStyle={styles.scroll}
+        contentContainerStyle={s.scroll}
         showsVerticalScrollIndicator={false}
       >
 
         {/* ── Profile Card ── */}
-        <View style={styles.profileCard}>
-          <View style={styles.avatarCircle}>
-            <Text style={styles.avatarText}>Y</Text>
+        <View style={s.profileCard}>
+          <View style={s.avatarCircle}>
+            <Text style={s.avatarText}>Y</Text>
           </View>
-          <View style={styles.profileInfo}>
-            <Text style={styles.profileName}>Yash</Text>
-            <Text style={styles.profileEmail}>yash@email.com</Text>
+          <View style={s.profileInfo}>
+            <Text style={s.profileName}>Yash</Text>
+            <Text style={s.profileEmail}>yash@email.com</Text>
           </View>
-          <TouchableOpacity style={styles.editBtn}>
-            <Text style={styles.editBtnText}>Edit</Text>
+          <TouchableOpacity style={s.editBtn}>
+            <Text style={s.editBtnText}>Edit</Text>
           </TouchableOpacity>
         </View>
 
-        {/* ── Notifications ── */}
-        <Text style={styles.sectionLabel}>Notifications</Text>
-        <View style={styles.settingsCard}>
-
-          <View style={styles.settingRow}>
-            <View style={styles.settingLeft}>
-              <Text style={styles.settingEmoji}>🔔</Text>
+        {/* ── Appearance ── */}
+        <Text style={s.sectionLabel}>Appearance</Text>
+        <View style={s.settingsCard}>
+          <View style={s.settingRow}>
+            <View style={s.settingLeft}>
+              <Text style={s.settingEmoji}>{isDark ? "🌙" : "☀️"}</Text>
               <View>
-                <Text style={styles.settingTitle}>Push Notifications</Text>
-                <Text style={styles.settingSub}>All app notifications</Text>
+                <Text style={s.settingTitle}>Dark Mode</Text>
+                <Text style={s.settingSub}>
+                  {isDark ? "Dark theme is on" : "Light theme is on"}
+                </Text>
+              </View>
+            </View>
+            <Switch
+              value={isDark}
+              onValueChange={toggleTheme}
+              trackColor={{ false: "#ccc", true: colors.primary }}
+              thumbColor={colors.textWhite}
+            />
+          </View>
+        </View>
+
+        {/* ── Notifications ── */}
+        <Text style={s.sectionLabel}>Notifications</Text>
+        <View style={s.settingsCard}>
+
+          <View style={s.settingRow}>
+            <View style={s.settingLeft}>
+              <Text style={s.settingEmoji}>🔔</Text>
+              <View>
+                <Text style={s.settingTitle}>Push Notifications</Text>
+                <Text style={s.settingSub}>All app notifications</Text>
               </View>
             </View>
             <Switch
               value={notifications}
               onValueChange={setNotifications}
-              trackColor={{ false: COLORS.border, true: COLORS.primary }}
-              thumbColor={COLORS.textWhite}
+              trackColor={{ false: "#ccc", true: colors.primary }}
+              thumbColor={colors.textWhite}
             />
           </View>
 
-          <View style={styles.settingDivider} />
+          <View style={s.settingDivider} />
 
-          <View style={styles.settingRow}>
-            <View style={styles.settingLeft}>
-              <Text style={styles.settingEmoji}>🚨</Text>
+          <View style={s.settingRow}>
+            <View style={s.settingLeft}>
+              <Text style={s.settingEmoji}>🚨</Text>
               <View>
-                <Text style={styles.settingTitle}>SOS Alerts</Text>
-                <Text style={styles.settingSub}>Emergency alerts from members</Text>
+                <Text style={s.settingTitle}>SOS Alerts</Text>
+                <Text style={s.settingSub}>Emergency alerts from members</Text>
               </View>
             </View>
             <Switch
               value={sosAlerts}
               onValueChange={setSosAlerts}
-              trackColor={{ false: COLORS.border, true: COLORS.danger }}
-              thumbColor={COLORS.textWhite}
+              trackColor={{ false: "#ccc", true: colors.danger }}
+              thumbColor={colors.textWhite}
             />
           </View>
 
-          <View style={styles.settingDivider} />
+          <View style={s.settingDivider} />
 
-          <View style={styles.settingRow}>
-            <View style={styles.settingLeft}>
-              <Text style={styles.settingEmoji}>👥</Text>
+          <View style={s.settingRow}>
+            <View style={s.settingLeft}>
+              <Text style={s.settingEmoji}>👥</Text>
               <View>
-                <Text style={styles.settingTitle}>Member Joined</Text>
-                <Text style={styles.settingSub}>When someone joins your room</Text>
+                <Text style={s.settingTitle}>Member Joined</Text>
+                <Text style={s.settingSub}>When someone joins your room</Text>
               </View>
             </View>
             <Switch
               value={memberJoin}
               onValueChange={setMemberJoin}
-              trackColor={{ false: COLORS.border, true: COLORS.primary }}
-              thumbColor={COLORS.textWhite}
+              trackColor={{ false: "#ccc", true: colors.primary }}
+              thumbColor={colors.textWhite}
             />
           </View>
 
         </View>
 
         {/* ── Location ── */}
-        <Text style={styles.sectionLabel}>Location & Privacy</Text>
-        <View style={styles.settingsCard}>
+        <Text style={s.sectionLabel}>Location & Privacy</Text>
+        <View style={s.settingsCard}>
 
-          <View style={styles.settingRow}>
-            <View style={styles.settingLeft}>
-              <Text style={styles.settingEmoji}>📍</Text>
+          <View style={s.settingRow}>
+            <View style={s.settingLeft}>
+              <Text style={s.settingEmoji}>📍</Text>
               <View>
-                <Text style={styles.settingTitle}>Share Location</Text>
-                <Text style={styles.settingSub}>Visible to room members</Text>
+                <Text style={s.settingTitle}>Share Location</Text>
+                <Text style={s.settingSub}>Visible to room members</Text>
               </View>
             </View>
             <Switch
               value={shareLocation}
               onValueChange={setShareLocation}
-              trackColor={{ false: COLORS.border, true: COLORS.primary }}
-              thumbColor={COLORS.textWhite}
+              trackColor={{ false: "#ccc", true: colors.primary }}
+              thumbColor={colors.textWhite}
             />
           </View>
 
-          <View style={styles.settingDivider} />
+          <View style={s.settingDivider} />
 
-          <View style={styles.settingRow}>
-            <View style={styles.settingLeft}>
-              <Text style={styles.settingEmoji}>🎯</Text>
+          <View style={s.settingRow}>
+            <View style={s.settingLeft}>
+              <Text style={s.settingEmoji}>🎯</Text>
               <View>
-                <Text style={styles.settingTitle}>High Accuracy GPS</Text>
-                <Text style={styles.settingSub}>Uses more battery</Text>
+                <Text style={s.settingTitle}>High Accuracy GPS</Text>
+                <Text style={s.settingSub}>Uses more battery</Text>
               </View>
             </View>
             <Switch
               value={highAccuracy}
               onValueChange={setHighAccuracy}
-              trackColor={{ false: COLORS.border, true: COLORS.primary }}
-              thumbColor={COLORS.textWhite}
+              trackColor={{ false: "#ccc", true: colors.primary }}
+              thumbColor={colors.textWhite}
             />
           </View>
 
-          <View style={styles.settingDivider} />
+          <View style={s.settingDivider} />
 
-          <View style={styles.settingRow}>
-            <View style={styles.settingLeft}>
-              <Text style={styles.settingEmoji}>🔄</Text>
+          <View style={s.settingRow}>
+            <View style={s.settingLeft}>
+              <Text style={s.settingEmoji}>🔄</Text>
               <View>
-                <Text style={styles.settingTitle}>Background Location</Text>
-                <Text style={styles.settingSub}>Track when app is minimised</Text>
+                <Text style={s.settingTitle}>Background Location</Text>
+                <Text style={s.settingSub}>Track when app is minimised</Text>
               </View>
             </View>
             <Switch
               value={backgroundLocation}
               onValueChange={setBackgroundLocation}
-              trackColor={{ false: COLORS.border, true: COLORS.primary }}
-              thumbColor={COLORS.textWhite}
+              trackColor={{ false: "#ccc", true: colors.primary }}
+              thumbColor={colors.textWhite}
             />
           </View>
 
         </View>
 
         {/* ── App ── */}
-        <Text style={styles.sectionLabel}>App</Text>
-        <View style={styles.settingsCard}>
+        <Text style={s.sectionLabel}>App</Text>
+        <View style={s.settingsCard}>
 
-          <TouchableOpacity style={styles.settingRow}>
-            <View style={styles.settingLeft}>
-              <Text style={styles.settingEmoji}>🗺️</Text>
-              <Text style={styles.settingTitle}>Trip History</Text>
+          <TouchableOpacity style={s.settingRow}>
+            <View style={s.settingLeft}>
+              <Text style={s.settingEmoji}>🗺️</Text>
+              <Text style={s.settingTitle}>Trip History</Text>
             </View>
-            <Text style={styles.settingArrow}>→</Text>
+            <Text style={s.settingArrow}>→</Text>
           </TouchableOpacity>
 
-          <View style={styles.settingDivider} />
+          <View style={s.settingDivider} />
 
-          <TouchableOpacity style={styles.settingRow}>
-            <View style={styles.settingLeft}>
-              <Text style={styles.settingEmoji}>🔒</Text>
-              <Text style={styles.settingTitle}>Privacy Policy</Text>
+          <TouchableOpacity
+            style={s.settingRow}
+            onPress={() => Linking.openURL("https://waybound.app/privacy")}
+          >
+            <View style={s.settingLeft}>
+              <Text style={s.settingEmoji}>🔒</Text>
+              <Text style={s.settingTitle}>Privacy Policy</Text>
             </View>
-            <Text style={styles.settingArrow}>→</Text>
+            <Text style={s.settingArrow}>→</Text>
           </TouchableOpacity>
 
-          <View style={styles.settingDivider} />
+          <View style={s.settingDivider} />
 
-          <TouchableOpacity style={styles.settingRow}>
-            <View style={styles.settingLeft}>
-              <Text style={styles.settingEmoji}>📋</Text>
-              <Text style={styles.settingTitle}>Terms of Service</Text>
+          <TouchableOpacity
+            style={s.settingRow}
+            onPress={() => Linking.openURL("https://waybound.app/terms")}
+          >
+            <View style={s.settingLeft}>
+              <Text style={s.settingEmoji}>📋</Text>
+              <Text style={s.settingTitle}>Terms of Service</Text>
             </View>
-            <Text style={styles.settingArrow}>→</Text>
+            <Text style={s.settingArrow}>→</Text>
           </TouchableOpacity>
 
-          <View style={styles.settingDivider} />
+          <View style={s.settingDivider} />
 
-          <TouchableOpacity style={styles.settingRow}>
-            <View style={styles.settingLeft}>
-              <Text style={styles.settingEmoji}>💬</Text>
-              <Text style={styles.settingTitle}>Send Feedback</Text>
+          <TouchableOpacity
+            style={s.settingRow}
+            onPress={() => Linking.openURL("mailto:support@waybound.app?subject=Feedback")}
+          >
+            <View style={s.settingLeft}>
+              <Text style={s.settingEmoji}>💬</Text>
+              <Text style={s.settingTitle}>Send Feedback</Text>
             </View>
-            <Text style={styles.settingArrow}>→</Text>
+            <Text style={s.settingArrow}>→</Text>
           </TouchableOpacity>
 
         </View>
 
         {/* ── App Info ── */}
-        <View style={styles.appInfoCard}>
-          <Text style={styles.appInfoEmoji}>🧭</Text>
-          <Text style={styles.appInfoName}>Waybound</Text>
-          <Text style={styles.appInfoVersion}>Version {VERSION}</Text>
-          <Text style={styles.appInfoTagline}>Ride together. Stay safe.</Text>
+        <View style={s.appInfoCard}>
+          <Text style={s.appInfoEmoji}>🧭</Text>
+          <Text style={s.appInfoName}>Waybound</Text>
+          <Text style={s.appInfoVersion}>Version {VERSION}</Text>
+          <Text style={s.appInfoTagline}>Ride together. Stay safe.</Text>
         </View>
 
         {/* ── Log Out ── */}
-        <TouchableOpacity
-          style={styles.logoutBtn}
-          onPress={handleLogout}
-        >
-          <Text style={styles.logoutBtnText}>Log Out</Text>
+        <TouchableOpacity style={s.logoutBtn} onPress={handleLogout}>
+          <Text style={s.logoutBtnText}>Log Out</Text>
         </TouchableOpacity>
 
         {/* ── Delete Account ── */}
-        <TouchableOpacity
-          style={styles.deleteBtn}
-          onPress={handleDeleteAccount}
-        >
-          <Text style={styles.deleteBtnText}>Delete Account</Text>
+        <TouchableOpacity style={s.deleteBtn} onPress={handleDeleteAccount}>
+          <Text style={s.deleteBtnText}>Delete Account</Text>
         </TouchableOpacity>
 
       </ScrollView>
@@ -270,13 +295,11 @@ export default function SettingsScreen({ navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors) => StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: COLORS.background,
+    backgroundColor: colors.background,
   },
-
-  // Top Bar
   topBar: {
     flexDirection: "row",
     alignItems: "center",
@@ -284,45 +307,42 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.md,
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
-    backgroundColor: COLORS.background,
+    borderBottomColor: colors.border,
+    backgroundColor: colors.background,
   },
   backBtn: {
     width: 40,
     height: 40,
     borderRadius: RADIUS.md,
-    backgroundColor: COLORS.inputBg,
+    backgroundColor: colors.inputBg,
     alignItems: "center",
     justifyContent: "center",
   },
   backArrow: {
     fontSize: FONTSIZE.xl,
-    color: COLORS.textPrimary,
+    color: colors.textPrimary,
     fontFamily: FONTS.medium,
   },
   topBarTitle: {
     fontSize: FONTSIZE.lg,
     fontFamily: FONTS.bold,
-    color: COLORS.textPrimary,
+    color: colors.textPrimary,
   },
-
   scroll: {
     flexGrow: 1,
     paddingHorizontal: SPACING.lg,
     paddingTop: SPACING.lg,
     paddingBottom: SPACING.xxl,
   },
-
-  // Profile Card
   profileCard: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     borderRadius: RADIUS.xl,
     padding: SPACING.md,
     marginBottom: SPACING.lg,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: colors.border,
     gap: SPACING.md,
     ...SHADOW.md,
   },
@@ -330,7 +350,7 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: RADIUS.full,
-    backgroundColor: COLORS.primary,
+    backgroundColor: colors.primary,
     alignItems: "center",
     justifyContent: "center",
     ...SHADOW.sm,
@@ -338,51 +358,45 @@ const styles = StyleSheet.create({
   avatarText: {
     fontSize: FONTSIZE.xl,
     fontFamily: FONTS.bold,
-    color: COLORS.textWhite,
+    color: colors.textWhite,
   },
-  profileInfo: {
-    flex: 1,
-  },
+  profileInfo: { flex: 1 },
   profileName: {
     fontSize: FONTSIZE.lg,
     fontFamily: FONTS.bold,
-    color: COLORS.textPrimary,
+    color: colors.textPrimary,
   },
   profileEmail: {
     fontSize: FONTSIZE.sm,
     fontFamily: FONTS.regular,
-    color: COLORS.textSecondary,
+    color: colors.textSecondary,
     marginTop: 2,
   },
   editBtn: {
-    backgroundColor: COLORS.inputBg,
+    backgroundColor: colors.inputBg,
     borderRadius: RADIUS.md,
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.xs + 2,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: colors.border,
   },
   editBtnText: {
     fontSize: FONTSIZE.sm,
     fontFamily: FONTS.medium,
-    color: COLORS.primary,
+    color: colors.primary,
   },
-
-  // Section Label
   sectionLabel: {
     fontSize: FONTSIZE.sm,
     fontFamily: FONTS.medium,
-    color: COLORS.textSecondary,
+    color: colors.textSecondary,
     marginBottom: SPACING.sm,
   },
-
-  // Settings Card
   settingsCard: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     borderRadius: RADIUS.lg,
     paddingHorizontal: SPACING.md,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: colors.border,
     marginBottom: SPACING.lg,
     ...SHADOW.sm,
   },
@@ -405,33 +419,31 @@ const styles = StyleSheet.create({
   settingTitle: {
     fontSize: FONTSIZE.md,
     fontFamily: FONTS.medium,
-    color: COLORS.textPrimary,
+    color: colors.textPrimary,
   },
   settingSub: {
     fontSize: FONTSIZE.xs,
     fontFamily: FONTS.regular,
-    color: COLORS.textSecondary,
+    color: colors.textSecondary,
     marginTop: 2,
   },
   settingDivider: {
     height: 1,
-    backgroundColor: COLORS.border,
+    backgroundColor: colors.border,
   },
   settingArrow: {
     fontSize: FONTSIZE.lg,
-    color: COLORS.textMuted,
+    color: colors.textMuted,
     fontFamily: FONTS.medium,
   },
-
-  // App Info Card
   appInfoCard: {
     alignItems: "center",
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     borderRadius: RADIUS.xl,
     padding: SPACING.lg,
     marginBottom: SPACING.lg,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: colors.border,
     ...SHADOW.sm,
   },
   appInfoEmoji: {
@@ -441,40 +453,36 @@ const styles = StyleSheet.create({
   appInfoName: {
     fontSize: FONTSIZE.xl,
     fontFamily: FONTS.bold,
-    color: COLORS.textPrimary,
+    color: colors.textPrimary,
   },
   appInfoVersion: {
     fontSize: FONTSIZE.sm,
     fontFamily: FONTS.regular,
-    color: COLORS.textSecondary,
+    color: colors.textSecondary,
     marginTop: 2,
   },
   appInfoTagline: {
     fontSize: FONTSIZE.sm,
     fontFamily: FONTS.regular,
-    color: COLORS.textMuted,
+    color: colors.textMuted,
     marginTop: SPACING.xs,
     fontStyle: "italic",
   },
-
-  // Log Out
   logoutBtn: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     borderRadius: RADIUS.lg,
     paddingVertical: SPACING.md,
     alignItems: "center",
     marginBottom: SPACING.sm,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: colors.border,
     ...SHADOW.sm,
   },
   logoutBtnText: {
     fontSize: FONTSIZE.lg,
     fontFamily: FONTS.bold,
-    color: COLORS.danger,
+    color: colors.danger,
   },
-
-  // Delete Account
   deleteBtn: {
     alignItems: "center",
     paddingVertical: SPACING.sm,
@@ -482,7 +490,7 @@ const styles = StyleSheet.create({
   deleteBtnText: {
     fontSize: FONTSIZE.sm,
     fontFamily: FONTS.medium,
-    color: COLORS.textMuted,
+    color: colors.textMuted,
     textDecorationLine: "underline",
   },
 });

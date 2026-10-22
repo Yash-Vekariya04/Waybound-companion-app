@@ -5,7 +5,9 @@ import {
 } from "react-native";
 import {SafeAreaView} from "react-native-safe-area-context";
 import { COLORS, FONTS, RADIUS, SPACING, FONTSIZE, SHADOW } from "../constants/theme";
+import { useTheme } from "../context/ThemeContext";
 
+const { colors, isDark } = useTheme();
 const RECENT_TRIPS = [
   { id: "1", name: "Coastal Ride", date: "Oct 18", members: 4, duration: "2h 34m" },
   { id: "2", name: "Mountain Loop", date: "Oct 14", members: 6, duration: "4h 12m" },
