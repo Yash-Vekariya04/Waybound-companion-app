@@ -5,7 +5,9 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS, FONTS, RADIUS, SPACING, FONTSIZE, SHADOW } from "../constants/theme";
+import { useTheme } from "../context/ThemeContext";
 
+const { colors, isDark } = useTheme();
 // Mock member data — will come from Socket.io in backend phase
 const FALLBACK_MEMBER = {
   id: "1",

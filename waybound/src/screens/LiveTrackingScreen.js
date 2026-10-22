@@ -21,7 +21,9 @@ import {
   SHADOW,
 } from "../constants/theme";
 import { getLeafletHTML } from "../utils/leafletMap";
+import { useTheme } from "../context/ThemeContext";
 
+const { colors, isDark } = useTheme();
 const { width, height } = Dimensions.get("window");
 
 export default function LiveTrackingScreen({ navigation }) {

@@ -4,9 +4,13 @@ import {
   StyleSheet, KeyboardAvoidingView, ScrollView,
   Platform, StatusBar
 } from "react-native";
-import { COLORS, FONTS, RADIUS, SPACING, FONTSIZE, SHADOW } from "../constants/theme";
+import { FONTS, RADIUS, SPACING, FONTSIZE, SHADOW } from "../constants/theme";
+import { useTheme } from "../context/ThemeContext";
 
 export default function LoginScreen({ navigation }) {
+  const { isDark, colors } = useTheme();
+  const s = makeStyles(colors);
+
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -14,54 +18,57 @@ export default function LoginScreen({ navigation }) {
 
   return (
     <KeyboardAvoidingView
-      style={styles.root}
+      style={s.root}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
-      <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
+      <StatusBar
+        barStyle={isDark ? "light-content" : "dark-content"}
+        backgroundColor={colors.background}
+      />
       <ScrollView
-        contentContainerStyle={styles.scroll}
+        contentContainerStyle={s.scroll}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
 
         {/* ── Logo & Headline ── */}
-        <View style={styles.heroSection}>
-          <View style={styles.logoCircle}>
-            <Text style={styles.logoEmoji}>🧭</Text>
+        <View style={s.heroSection}>
+          <View style={s.logoCircle}>
+            <Text style={s.logoEmoji}>🧭</Text>
           </View>
-          <Text style={styles.appName}>Waybound</Text>
-          <Text style={styles.tagline}>Ride together. Stay safe.</Text>
+          <Text style={s.appName}>Waybound</Text>
+          <Text style={s.tagline}>Ride together. Stay safe.</Text>
         </View>
 
-        {/* ── Toggle: Login / Sign Up ── */}
-        <View style={styles.toggleRow}>
+        {/* ── Toggle ── */}
+        <View style={s.toggleRow}>
           <TouchableOpacity
-            style={[styles.toggleBtn, isLogin && styles.toggleActive]}
+            style={[s.toggleBtn, isLogin && s.toggleActive]}
             onPress={() => setIsLogin(true)}
           >
-            <Text style={[styles.toggleText, isLogin && styles.toggleTextActive]}>
+            <Text style={[s.toggleText, isLogin && s.toggleTextActive]}>
               Log In
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.toggleBtn, !isLogin && styles.toggleActive]}
+            style={[s.toggleBtn, !isLogin && s.toggleActive]}
             onPress={() => setIsLogin(false)}
           >
-            <Text style={[styles.toggleText, !isLogin && styles.toggleTextActive]}>
+            <Text style={[s.toggleText, !isLogin && s.toggleTextActive]}>
               Sign Up
             </Text>
           </TouchableOpacity>
         </View>
 
         {/* ── Form ── */}
-        <View style={styles.form}>
+        <View style={s.form}>
           {!isLogin && (
-            <View style={styles.inputWrapper}>
-              <Text style={styles.inputLabel}>Full Name</Text>
+            <View style={s.inputWrapper}>
+              <Text style={s.inputLabel}>Full Name</Text>
               <TextInput
-                style={styles.input}
+                style={s.input}
                 placeholder="Your name"
-                placeholderTextColor={COLORS.textMuted}
+                placeholderTextColor={colors.textMuted}
                 value={name}
                 onChangeText={setName}
                 autoCapitalize="words"
@@ -69,12 +76,12 @@ export default function LoginScreen({ navigation }) {
             </View>
           )}
 
-          <View style={styles.inputWrapper}>
-            <Text style={styles.inputLabel}>Email</Text>
+          <View style={s.inputWrapper}>
+            <Text style={s.inputLabel}>Email</Text>
             <TextInput
-              style={styles.input}
+              style={s.input}
               placeholder="you@email.com"
-              placeholderTextColor={COLORS.textMuted}
+              placeholderTextColor={colors.textMuted}
               value={email}
               onChangeText={setEmail}
               keyboardType="email-address"
@@ -82,12 +89,12 @@ export default function LoginScreen({ navigation }) {
             />
           </View>
 
-          <View style={styles.inputWrapper}>
-            <Text style={styles.inputLabel}>Password</Text>
+          <View style={s.inputWrapper}>
+            <Text style={s.inputLabel}>Password</Text>
             <TextInput
-              style={styles.input}
+              style={s.input}
               placeholder="••••••••"
-              placeholderTextColor={COLORS.textMuted}
+              placeholderTextColor={colors.textMuted}
               value={password}
               onChangeText={setPassword}
               secureTextEntry
@@ -95,53 +102,52 @@ export default function LoginScreen({ navigation }) {
           </View>
 
           {isLogin && (
-            <TouchableOpacity style={styles.forgotBtn}>
-              <Text style={styles.forgotText}>Forgot password?</Text>
+            <TouchableOpacity style={s.forgotBtn}>
+              <Text style={s.forgotText}>Forgot password?</Text>
             </TouchableOpacity>
           )}
 
-          {/* Primary CTA */}
           <TouchableOpacity
-            style={styles.primaryBtn}
+            style={s.primaryBtn}
             onPress={() => navigation.navigate("Home")}
           >
-            <Text style={styles.primaryBtnText}>
+            <Text style={s.primaryBtnText}>
               {isLogin ? "Log In" : "Create Account"}
             </Text>
           </TouchableOpacity>
         </View>
 
         {/* ── Divider ── */}
-        <View style={styles.dividerRow}>
-          <View style={styles.dividerLine} />
-          <Text style={styles.dividerText}>or continue with</Text>
-          <View style={styles.dividerLine} />
+        <View style={s.dividerRow}>
+          <View style={s.dividerLine} />
+          <Text style={s.dividerText}>or continue with</Text>
+          <View style={s.dividerLine} />
         </View>
 
         {/* ── Social Buttons ── */}
-        <View style={styles.socialRow}>
-          <TouchableOpacity style={styles.socialBtn}>
-            <Text style={styles.socialIcon}>G</Text>
-            <Text style={styles.socialLabel}>Google</Text>
+        <View style={s.socialRow}>
+          <TouchableOpacity style={s.socialBtn}>
+            <Text style={s.socialIcon}>G</Text>
+            <Text style={s.socialLabel}>Google</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.socialBtn}>
-            <Text style={styles.socialIcon}></Text>
-            <Text style={styles.socialLabel}>Apple</Text>
+          <TouchableOpacity style={s.socialBtn}>
+            <Text style={s.socialIcon}></Text>
+            <Text style={s.socialLabel}>Apple</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.socialBtn}>
-            <Text style={styles.socialIcon}>𝕏</Text>
-            <Text style={styles.socialLabel}>X</Text>
+          <TouchableOpacity style={s.socialBtn}>
+            <Text style={s.socialIcon}>𝕏</Text>
+            <Text style={s.socialLabel}>X</Text>
           </TouchableOpacity>
         </View>
 
         {/* ── Guest Button ── */}
         <TouchableOpacity
-          style={styles.guestBtn}
+          style={s.guestBtn}
           onPress={() => navigation.navigate("Home")}
         >
-          <Text style={styles.guestText}>Continue as Guest</Text>
+          <Text style={s.guestText}>Continue as Guest</Text>
         </TouchableOpacity>
-        <Text style={styles.guestDisclaimer}>
+        <Text style={s.guestDisclaimer}>
           Guest sessions are temporary. Your rooms and history won't be saved.
         </Text>
 
@@ -150,10 +156,10 @@ export default function LoginScreen({ navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors) => StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: COLORS.background,
+    backgroundColor: colors.background,
   },
   scroll: {
     flexGrow: 1,
@@ -161,8 +167,6 @@ const styles = StyleSheet.create({
     paddingTop: SPACING.xxl + 10,
     paddingBottom: SPACING.xxl,
   },
-
-  // Hero
   heroSection: {
     alignItems: "center",
     marginBottom: SPACING.xl,
@@ -171,7 +175,7 @@ const styles = StyleSheet.create({
     width: 72,
     height: 72,
     borderRadius: RADIUS.xl,
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: SPACING.sm,
@@ -183,20 +187,18 @@ const styles = StyleSheet.create({
   appName: {
     fontSize: FONTSIZE.huge,
     fontFamily: FONTS.bold,
-    color: COLORS.textPrimary,
+    color: colors.textPrimary,
     letterSpacing: 0.5,
   },
   tagline: {
     fontSize: FONTSIZE.md,
     fontFamily: FONTS.regular,
-    color: COLORS.textSecondary,
+    color: colors.textSecondary,
     marginTop: SPACING.xs,
   },
-
-  // Toggle
   toggleRow: {
     flexDirection: "row",
-    backgroundColor: COLORS.inputBg,
+    backgroundColor: colors.inputBg,
     borderRadius: RADIUS.lg,
     padding: 4,
     marginBottom: SPACING.lg,
@@ -208,20 +210,18 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   toggleActive: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     ...SHADOW.sm,
   },
   toggleText: {
     fontSize: FONTSIZE.md,
     fontFamily: FONTS.medium,
-    color: COLORS.textSecondary,
+    color: colors.textSecondary,
   },
   toggleTextActive: {
-    color: COLORS.primary,
+    color: colors.primary,
     fontFamily: FONTS.bold,
   },
-
-  // Form
   form: {
     marginBottom: SPACING.lg,
   },
@@ -231,19 +231,19 @@ const styles = StyleSheet.create({
   inputLabel: {
     fontSize: FONTSIZE.sm,
     fontFamily: FONTS.medium,
-    color: COLORS.textSecondary,
+    color: colors.textSecondary,
     marginBottom: SPACING.xs,
   },
   input: {
-    backgroundColor: COLORS.inputBg,
+    backgroundColor: colors.inputBg,
     borderRadius: RADIUS.md,
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.sm + 4,
     fontSize: FONTSIZE.md,
     fontFamily: FONTS.regular,
-    color: COLORS.textPrimary,
+    color: colors.textPrimary,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: colors.border,
   },
   forgotBtn: {
     alignSelf: "flex-end",
@@ -252,10 +252,10 @@ const styles = StyleSheet.create({
   forgotText: {
     fontSize: FONTSIZE.sm,
     fontFamily: FONTS.medium,
-    color: COLORS.primary,
+    color: colors.primary,
   },
   primaryBtn: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: colors.primary,
     borderRadius: RADIUS.lg,
     paddingVertical: SPACING.md,
     alignItems: "center",
@@ -264,11 +264,9 @@ const styles = StyleSheet.create({
   primaryBtnText: {
     fontSize: FONTSIZE.lg,
     fontFamily: FONTS.bold,
-    color: COLORS.textWhite,
+    color: colors.textWhite,
     letterSpacing: 0.3,
   },
-
-  // Divider
   dividerRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -277,16 +275,14 @@ const styles = StyleSheet.create({
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: COLORS.border,
+    backgroundColor: colors.border,
   },
   dividerText: {
     fontSize: FONTSIZE.sm,
     fontFamily: FONTS.regular,
-    color: COLORS.textMuted,
+    color: colors.textMuted,
     marginHorizontal: SPACING.sm,
   },
-
-  // Social
   socialRow: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -299,9 +295,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: SPACING.xs,
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: colors.border,
     borderRadius: RADIUS.md,
     paddingVertical: SPACING.sm + 2,
     ...SHADOW.sm,
@@ -309,18 +305,16 @@ const styles = StyleSheet.create({
   socialIcon: {
     fontSize: FONTSIZE.lg,
     fontFamily: FONTS.bold,
-    color: COLORS.textPrimary,
+    color: colors.textPrimary,
   },
   socialLabel: {
     fontSize: FONTSIZE.sm,
     fontFamily: FONTS.medium,
-    color: COLORS.textPrimary,
+    color: colors.textPrimary,
   },
-
-  // Guest
   guestBtn: {
     borderWidth: 1.5,
-    borderColor: COLORS.primary,
+    borderColor: colors.primary,
     borderStyle: "dashed",
     borderRadius: RADIUS.lg,
     paddingVertical: SPACING.sm + 4,
@@ -330,12 +324,12 @@ const styles = StyleSheet.create({
   guestText: {
     fontSize: FONTSIZE.md,
     fontFamily: FONTS.medium,
-    color: COLORS.primary,
+    color: colors.primary,
   },
   guestDisclaimer: {
     fontSize: FONTSIZE.xs,
     fontFamily: FONTS.regular,
-    color: COLORS.textMuted,
+    color: colors.textMuted,
     textAlign: "center",
     lineHeight: 16,
   },
