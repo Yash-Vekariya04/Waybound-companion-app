@@ -1,8 +1,9 @@
 import React, { useState, useRef } from "react";
 import {
   View, Text, StyleSheet, TouchableOpacity,
-  TextInput, StatusBar, SafeAreaView, ScrollView, Keyboard
+  TextInput, StatusBar, ScrollView, Keyboard
 } from "react-native";
+import {SafeAreaView} from "react-native-safe-area-context";
 import { COLORS, FONTS, RADIUS, SPACING, FONTSIZE, SHADOW } from "../constants/theme";
 
 const RECENT_CODES = [
