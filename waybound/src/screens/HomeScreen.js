@@ -160,7 +160,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginTop: SPACING.lg,
     marginBottom: SPACING.lg,
   },
   greeting: {
