@@ -1,9 +1,23 @@
 import React, { useState } from "react";
 import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  TextInput, StatusBar, SafeAreaView, Switch
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  TextInput,
+  StatusBar,
+  SafeAreaView,
+  Switch,
 } from "react-native";
-import { COLORS, FONTS, RADIUS, SPACING, FONTSIZE, SHADOW } from "../constants/theme";
+import {
+  COLORS,
+  FONTS,
+  RADIUS,
+  SPACING,
+  FONTSIZE,
+  SHADOW,
+} from "../constants/theme";
 
 const ROOM_ICONS = ["🚴", "🏍️", "🚗", "🥾", "⛵", "🏕️"];
 
@@ -15,7 +29,14 @@ export default function CreateRoomScreen({ navigation }) {
   const [shareLocation, setShareLocation] = useState(true);
   const [isPrivate, setIsPrivate] = useState(true);
 
-  const generatedCode = "WB-4829";
+  const [generatedCode] = useState(() => {
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    const segment = () =>
+      Array.from({ length: 4 }, () =>
+        chars[Math.floor(Math.random() * chars.length)]
+      ).join("");
+    return `WB-${segment()}`;
+  });
 
   return (
     <SafeAreaView style={styles.root}>
@@ -37,7 +58,6 @@ export default function CreateRoomScreen({ navigation }) {
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
       >
-
         {/* ── Room Icon Picker ── */}
         <Text style={styles.sectionLabel}>Choose an Icon</Text>
         <View style={styles.iconRow}>
@@ -46,7 +66,7 @@ export default function CreateRoomScreen({ navigation }) {
               key={icon}
               style={[
                 styles.iconBtn,
-                selectedIcon === icon && styles.iconBtnActive
+                selectedIcon === icon && styles.iconBtnActive,
               ]}
               onPress={() => setSelectedIcon(icon)}
             >
@@ -88,7 +108,6 @@ export default function CreateRoomScreen({ navigation }) {
         {/* ── Settings Toggles ── */}
         <Text style={styles.sectionLabel}>Room Settings</Text>
         <View style={styles.settingsCard}>
-
           <View style={styles.settingRow}>
             <View>
               <Text style={styles.settingTitle}>Private Room</Text>
@@ -122,7 +141,9 @@ export default function CreateRoomScreen({ navigation }) {
           <View style={styles.settingRow}>
             <View>
               <Text style={styles.settingTitle}>Share Location</Text>
-              <Text style={styles.settingSub}>Broadcast your position live</Text>
+              <Text style={styles.settingSub}>
+                Broadcast your position live
+              </Text>
             </View>
             <Switch
               value={shareLocation}
@@ -131,7 +152,6 @@ export default function CreateRoomScreen({ navigation }) {
               thumbColor={COLORS.textWhite}
             />
           </View>
-
         </View>
 
         {/* ── Generated Room Code Preview ── */}
@@ -150,20 +170,17 @@ export default function CreateRoomScreen({ navigation }) {
         <TouchableOpacity
           style={[
             styles.createBtn,
-            !roomName.trim() && styles.createBtnDisabled
+            !roomName.trim() && styles.createBtnDisabled,
           ]}
           onPress={() => navigation.navigate("LiveTracking")}
           disabled={!roomName.trim()}
         >
-          <Text style={styles.createBtnText}>
-            {selectedIcon} Create Room
-          </Text>
+          <Text style={styles.createBtnText}>{selectedIcon} Create Room</Text>
         </TouchableOpacity>
 
         {!roomName.trim() && (
           <Text style={styles.createHint}>Enter a room name to continue</Text>
         )}
-
       </ScrollView>
     </SafeAreaView>
   );
