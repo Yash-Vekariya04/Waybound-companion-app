@@ -3,6 +3,7 @@ const cors = require("cors");
 const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
 const authRoutes = require("./routes/authRoutes");
+const roomRoutes = require("./routes/roomRoutes");
 require("dotenv").config();
 
 const app = express();
@@ -23,8 +24,10 @@ app.use(limiter);
 
 // ── Body Parser ──────────────────────────────────────
 app.use(express.json());
+
 // ── Routes ───────────────────────────────────────────
 app.use("/api/auth", authRoutes);
+app.use("/api/rooms", roomRoutes);
 
 // ── Health Check Route ───────────────────────────────
 app.get("/health", (req, res) => {
