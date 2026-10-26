@@ -2,34 +2,50 @@ const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
+const mongoSanitize = require("express-mongo-sanitize");
 const authRoutes = require("./routes/authRoutes");
 const roomRoutes = require("./routes/roomRoutes");
 require("dotenv").config();
 
 const app = express();
 
-// ── Security Middleware ──────────────────────────────
+// ── Security Headers ─────────────────────────────────
 app.use(helmet());
 
+// ── CORS ─────────────────────────────────────────────
 app.use(cors({
-  origin: "*",
+  origin: "*", // tightened in production
+  methods: ["GET", "POST", "PATCH", "DELETE"],
+  allowedHeaders: ["Content-Type", "Authorization"],
 }));
 
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
+// ── Rate Limiting ─────────────────────────────────────
+const globalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100,
   message: { error: "Too many requests. Please try again later." },
 });
-app.use(limiter);
+app.use(globalLimiter);
 
-// ── Body Parser ──────────────────────────────────────
-app.use(express.json());
+// ── Stricter limit for auth routes ───────────────────
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10, // only 10 login/register attempts per 15 min
+  message: { error: "Too many auth attempts. Please try again later." },
+});
+app.use("/api/auth", authLimiter);
 
-// ── Routes ───────────────────────────────────────────
+// ── Body Parser ───────────────────────────────────────
+app.use(express.json({ limit: "10kb" })); // limit body size
+
+// ── Sanitize MongoDB Queries ──────────────────────────
+app.use(mongoSanitize());
+
+// ── Routes ────────────────────────────────────────────
 app.use("/api/auth", authRoutes);
 app.use("/api/rooms", roomRoutes);
 
-// ── Health Check Route ───────────────────────────────
+// ── Health Check ──────────────────────────────────────
 app.get("/health", (req, res) => {
   res.json({
     status: "ok",
@@ -38,9 +54,15 @@ app.get("/health", (req, res) => {
   });
 });
 
-// ── 404 Handler ──────────────────────────────────────
+// ── 404 Handler ───────────────────────────────────────
 app.use((req, res) => {
   res.status(404).json({ error: "Route not found" });
+});
+
+// ── Global Error Handler ──────────────────────────────
+app.use((err, req, res, next) => {
+  console.error("Unhandled error:", err.message);
+  res.status(500).json({ error: "Something went wrong. Please try again." });
 });
 
 module.exports = app;

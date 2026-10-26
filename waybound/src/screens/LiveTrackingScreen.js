@@ -16,6 +16,7 @@ import { useAuth } from "../context/AuthContext";
 import { connectSocket, disconnectSocket, getSocket } from "../services/socket";
 import { getLeafletHTML } from "../utils/leafletMap";
 import { WebView } from "react-native-webview";
+import { endRoom } from "../services/api";
 
 export default function LiveTrackingScreen({ navigation, route }) {
   const { isDark, colors } = useTheme();
@@ -133,18 +134,32 @@ export default function LiveTrackingScreen({ navigation, route }) {
   }, [cleanup, setupSocket, startLocation]);
 
   function handleLeaveRoom() {
-    Alert.alert("Leave Room", "Are you sure you want to leave this ride?", [
+  Alert.alert(
+    "Leave Room",
+    user?.id === room?.host
+      ? "You are the host. Leaving will end the room for everyone."
+      : "Are you sure you want to leave this ride?",
+    [
       { text: "Cancel", style: "cancel" },
       {
         text: "Leave",
         style: "destructive",
-        onPress: () => {
+        onPress: async () => {
+          // If host, end the room in DB
+          if (user?.id === room?.host) {
+            try {
+              await endRoom(room.id || room._id);
+            } catch (e) {
+              console.log("End room error:", e.message);
+            }
+          }
           cleanup();
           navigation.replace("MainTabs");
         },
       },
-    ]);
-  }
+    ]
+  );
+}
 
   const mapMembers = members
     .filter((m) => m.latitude && m.longitude)

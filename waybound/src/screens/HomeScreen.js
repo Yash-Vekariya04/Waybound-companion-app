@@ -1,23 +1,62 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import {
-  View, Text, StyleSheet, ScrollView,
-  TouchableOpacity, StatusBar
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  StatusBar,
+  ActivityIndicator,
+  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useFocusEffect } from "@react-navigation/native";
 import { FONTS, RADIUS, SPACING, FONTSIZE, SHADOW } from "../constants/theme";
 import { useTheme } from "../context/ThemeContext";
-
-const RECENT_TRIPS = [
-  { id: "1", name: "Coastal Ride",  date: "Oct 18", members: 4, duration: "2h 34m" },
-  { id: "2", name: "Mountain Loop", date: "Oct 14", members: 6, duration: "4h 12m" },
-  { id: "3", name: "City Cruise",   date: "Oct 10", members: 3, duration: "1h 20m" },
-];
+import { useAuth } from "../context/AuthContext";
+import { getMyRooms } from "../services/api";
 
 export default function HomeScreen({ navigation }) {
   const { isDark, colors } = useTheme();
+  const { user, clearSession } = useAuth();
   const s = makeStyles(colors);
 
-  const [hasActiveRoom] = useState(false);
+  const [recentRooms, setRecentRooms] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // ── Fetch rooms every time screen comes into focus ──
+
+  async function fetchRooms() {
+    setLoading(true);
+    try {
+      const result = await getMyRooms();
+      setRecentRooms(result.rooms);
+    } catch (error) {
+      console.log("Fetch rooms error:", error.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchRooms();
+    }, []),
+  );
+
+  async function handleLogout() {
+    Alert.alert("Log Out", "Are you sure you want to log out?", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Log Out",
+        style: "destructive",
+        onPress: async () => {
+          await clearSession();
+          navigation.replace("Login");
+        },
+      },
+    ]);
+  }
 
   return (
     <SafeAreaView style={s.root}>
@@ -25,406 +64,259 @@ export default function HomeScreen({ navigation }) {
         barStyle={isDark ? "light-content" : "dark-content"}
         backgroundColor={colors.background}
       />
+
       <ScrollView
         contentContainerStyle={s.scroll}
         showsVerticalScrollIndicator={false}
       >
-
         {/* ── Header ── */}
         <View style={s.header}>
           <View>
-            <Text style={s.greeting}>Good morning 👋</Text>
-            <Text style={s.username}>Yash</Text>
+            <Text style={s.greeting}>Hello, {user?.name} 👋</Text>
+            <Text style={s.subtitle}>Ready to ride?</Text>
           </View>
-          <TouchableOpacity
-            style={s.avatarCircle}
-            onPress={() => navigation.navigate("Settings")}
-          >
-            <Text style={s.avatarText}>Y</Text>
+          <TouchableOpacity style={s.logoutBtn} onPress={handleLogout}>
+            <Text style={s.logoutBtnText}>Log Out</Text>
           </TouchableOpacity>
         </View>
 
-        {/* ── Active Room Card or No Room State ── */}
-        {hasActiveRoom ? (
-          <View style={[s.card, s.activeRoomCard]}>
-            <View style={s.activeRoomTop}>
-              <View>
-                <Text style={s.activeRoomLabel}>Active Room</Text>
-                <Text style={s.activeRoomName}>Coastal Ride 🚴</Text>
-              </View>
-              <View style={s.liveBadge}>
-                <View style={s.liveDot} />
-                <Text style={s.liveText}>LIVE</Text>
-              </View>
-            </View>
-            <View style={s.activeRoomStats}>
-              <View style={s.statItem}>
-                <Text style={s.statValue}>5</Text>
-                <Text style={s.statLabel}>Members</Text>
-              </View>
-              <View style={s.statDivider} />
-              <View style={s.statItem}>
-                <Text style={s.statValue}>12 km</Text>
-                <Text style={s.statLabel}>Distance</Text>
-              </View>
-              <View style={s.statDivider} />
-              <View style={s.statItem}>
-                <Text style={s.statValue}>1h 04m</Text>
-                <Text style={s.statLabel}>Duration</Text>
-              </View>
-            </View>
-            <TouchableOpacity
-              style={s.rejoinBtn}
-              onPress={() => navigation.navigate("LiveTracking")}
-            >
-              <Text style={s.rejoinBtnText}>Rejoin Room →</Text>
-            </TouchableOpacity>
-          </View>
-        ) : (
-          <View style={[s.card, s.noRoomCard]}>
-            <Text style={s.noRoomEmoji}>🗺️</Text>
-            <Text style={s.noRoomTitle}>No active room</Text>
-            <Text style={s.noRoomSub}>
-              Create a room or join one to start tracking your ride.
-            </Text>
-          </View>
-        )}
-
-        {/* ── Quick Actions ── */}
-        <Text style={s.sectionTitle}>Quick Actions</Text>
-        <View style={s.actionsRow}>
+        {/* ── Action Buttons ── */}
+        <View style={s.actionRow}>
           <TouchableOpacity
-            style={[s.actionCard, s.actionCardPrimary]}
+            style={[s.actionBtn, { backgroundColor: colors.primary }]}
             onPress={() => navigation.navigate("CreateRoom")}
           >
-            <Text style={s.actionEmoji}>➕</Text>
-            <Text style={s.actionLabelPrimary}>Create Room</Text>
-            <Text style={s.actionSubPrimary}>Start a new ride</Text>
+            <Text style={s.actionIcon}>＋</Text>
+            <Text style={s.actionBtnText}>Create Room</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[s.actionCard, s.actionCardOutline]}
+            style={[s.actionBtn, { backgroundColor: colors.surface }]}
             onPress={() => navigation.navigate("JoinRoom")}
           >
-            <Text style={s.actionEmoji}>🔗</Text>
-            <Text style={s.actionLabelOutline}>Join Room</Text>
-            <Text style={s.actionSubOutline}>Enter a room code</Text>
+            <Text style={s.actionIcon}>🔗</Text>
+            <Text style={[s.actionBtnText, { color: colors.textPrimary }]}>
+              Join Room
+            </Text>
           </TouchableOpacity>
         </View>
 
-        {/* ── Safety Alert Button ── */}
-        <TouchableOpacity
-          style={s.alertBtn}
-          onPress={() => navigation.navigate("SafetyAlert")}
-        >
-          <Text style={s.alertBtnEmoji}>🚨</Text>
-          <View>
-            <Text style={s.alertBtnTitle}>Safety Alert</Text>
-            <Text style={s.alertBtnSub}>Notify your group instantly</Text>
-          </View>
-          <Text style={s.alertBtnArrow}>→</Text>
-        </TouchableOpacity>
+        {/* ── Recent Rooms ── */}
+        <Text style={s.sectionTitle}>Recent Rooms</Text>
 
-        {/* ── Recent Trips ── */}
-        <Text style={s.sectionTitle}>Recent Trips</Text>
-        {RECENT_TRIPS.map((trip) => (
-          <View key={trip.id} style={s.tripCard}>
-            <View style={s.tripLeft}>
-              <View style={s.tripIconCircle}>
-                <Text style={s.tripIcon}>🚴</Text>
+        {loading ? (
+          <View style={s.loadingBox}>
+            <ActivityIndicator color={colors.primary} />
+            <Text style={s.loadingText}>Loading your rooms...</Text>
+          </View>
+        ) : recentRooms.length === 0 ? (
+          <View style={s.emptyBox}>
+            <Text style={s.emptyIcon}>🗺️</Text>
+            <Text style={s.emptyTitle}>No rooms yet</Text>
+            <Text style={s.emptySub}>
+              Create or join a room to start riding together!
+            </Text>
+          </View>
+        ) : (
+          recentRooms.map((room) => (
+            <TouchableOpacity
+              key={room._id}
+              style={s.roomCard}
+              onPress={() => navigation.navigate("LiveTracking", { room })}
+            >
+              <View style={s.roomCardLeft}>
+                <Text style={s.roomCardIcon}>{room.icon}</Text>
+                <View>
+                  <Text style={s.roomCardName}>{room.name}</Text>
+                  <Text style={s.roomCardCode}>{room.code}</Text>
+                </View>
               </View>
-              <View>
-                <Text style={s.tripName}>{trip.name}</Text>
-                <Text style={s.tripMeta}>
-                  {trip.date} · {trip.members} members
+              <View style={s.roomCardRight}>
+                <Text style={s.roomCardMembers}>
+                  👥 {room.members.length} member
+                  {room.members.length !== 1 ? "s" : ""}
                 </Text>
+                <View style={s.roomCardActiveBadge}>
+                  <Text style={s.roomCardCode}>
+                    Created {new Date(room.createdAt).toLocaleDateString()}
+                  </Text>
+                </View>
               </View>
-            </View>
-            <Text style={s.tripDuration}>{trip.duration}</Text>
-          </View>
-        ))}
-
+            </TouchableOpacity>
+          ))
+        )}
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-const makeStyles = (colors) => StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  scroll: {
-    flexGrow: 1,
-    paddingHorizontal: SPACING.lg,
-    paddingTop: SPACING.lg,
-    paddingBottom: SPACING.xxl,
-  },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: SPACING.lg,
-  },
-  greeting: {
-    fontSize: FONTSIZE.sm,
-    fontFamily: FONTS.regular,
-    color: colors.textSecondary,
-  },
-  username: {
-    fontSize: FONTSIZE.xxl,
-    fontFamily: FONTS.bold,
-    color: colors.textPrimary,
-  },
-  avatarCircle: {
-    width: 44,
-    height: 44,
-    borderRadius: RADIUS.full,
-    backgroundColor: colors.primary,
-    alignItems: "center",
-    justifyContent: "center",
-    ...SHADOW.sm,
-  },
-  avatarText: {
-    fontSize: FONTSIZE.lg,
-    fontFamily: FONTS.bold,
-    color: colors.textWhite,
-  },
-  card: {
-    borderRadius: RADIUS.lg,
-    padding: SPACING.lg,
-    marginBottom: SPACING.lg,
-    ...SHADOW.md,
-  },
-  activeRoomCard: {
-    backgroundColor: colors.primary,
-  },
-  activeRoomTop: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    marginBottom: SPACING.md,
-  },
-  activeRoomLabel: {
-    fontSize: FONTSIZE.sm,
-    fontFamily: FONTS.regular,
-    color: "rgba(255,255,255,0.75)",
-  },
-  activeRoomName: {
-    fontSize: FONTSIZE.xl,
-    fontFamily: FONTS.bold,
-    color: colors.textWhite,
-    marginTop: 2,
-  },
-  liveBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "rgba(255,255,255,0.2)",
-    borderRadius: RADIUS.full,
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: 4,
-    gap: 5,
-  },
-  liveDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: "#2ecc71",
-  },
-  liveText: {
-    fontSize: FONTSIZE.xs,
-    fontFamily: FONTS.bold,
-    color: colors.textWhite,
-    letterSpacing: 1,
-  },
-  activeRoomStats: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    backgroundColor: "rgba(255,255,255,0.15)",
-    borderRadius: RADIUS.md,
-    padding: SPACING.md,
-    marginBottom: SPACING.md,
-  },
-  statItem: {
-    flex: 1,
-    alignItems: "center",
-  },
-  statValue: {
-    fontSize: FONTSIZE.lg,
-    fontFamily: FONTS.bold,
-    color: colors.textWhite,
-  },
-  statLabel: {
-    fontSize: FONTSIZE.xs,
-    fontFamily: FONTS.regular,
-    color: "rgba(255,255,255,0.7)",
-    marginTop: 2,
-  },
-  statDivider: {
-    width: 1,
-    height: 28,
-    backgroundColor: "rgba(255,255,255,0.25)",
-  },
-  rejoinBtn: {
-    backgroundColor: colors.textWhite,
-    borderRadius: RADIUS.md,
-    paddingVertical: SPACING.sm + 2,
-    alignItems: "center",
-  },
-  rejoinBtnText: {
-    fontSize: FONTSIZE.md,
-    fontFamily: FONTS.bold,
-    color: colors.primary,
-  },
-  noRoomCard: {
-    backgroundColor: colors.surface,
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  noRoomEmoji: {
-    fontSize: 36,
-    marginBottom: SPACING.sm,
-  },
-  noRoomTitle: {
-    fontSize: FONTSIZE.lg,
-    fontFamily: FONTS.bold,
-    color: colors.textPrimary,
-    marginBottom: SPACING.xs,
-  },
-  noRoomSub: {
-    fontSize: FONTSIZE.sm,
-    fontFamily: FONTS.regular,
-    color: colors.textSecondary,
-    textAlign: "center",
-    lineHeight: 20,
-  },
-  sectionTitle: {
-    fontSize: FONTSIZE.lg,
-    fontFamily: FONTS.bold,
-    color: colors.textPrimary,
-    marginBottom: SPACING.md,
-  },
-  actionsRow: {
-    flexDirection: "row",
-    gap: SPACING.sm,
-    marginBottom: SPACING.lg,
-  },
-  actionCard: {
-    flex: 1,
-    borderRadius: RADIUS.lg,
-    padding: SPACING.md,
-    ...SHADOW.sm,
-  },
-  actionCardPrimary: {
-    backgroundColor: colors.primary,
-  },
-  actionCardOutline: {
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  actionEmoji: {
-    fontSize: 24,
-    marginBottom: SPACING.xs,
-  },
-  actionLabelPrimary: {
-    fontSize: FONTSIZE.md,
-    fontFamily: FONTS.bold,
-    color: colors.textWhite,
-  },
-  actionSubPrimary: {
-    fontSize: FONTSIZE.xs,
-    fontFamily: FONTS.regular,
-    color: "rgba(255,255,255,0.75)",
-    marginTop: 2,
-  },
-  actionLabelOutline: {
-    fontSize: FONTSIZE.md,
-    fontFamily: FONTS.bold,
-    color: colors.textPrimary,
-  },
-  actionSubOutline: {
-    fontSize: FONTSIZE.xs,
-    fontFamily: FONTS.regular,
-    color: colors.textSecondary,
-    marginTop: 2,
-  },
-  alertBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: colors.surface,
-    borderRadius: RADIUS.lg,
-    padding: SPACING.md,
-    borderWidth: 1,
-    borderColor: "#fdd",
-    marginBottom: SPACING.lg,
-    gap: SPACING.md,
-    ...SHADOW.sm,
-  },
-  alertBtnEmoji: {
-    fontSize: 28,
-  },
-  alertBtnTitle: {
-    fontSize: FONTSIZE.md,
-    fontFamily: FONTS.bold,
-    color: colors.danger,
-  },
-  alertBtnSub: {
-    fontSize: FONTSIZE.xs,
-    fontFamily: FONTS.regular,
-    color: colors.textSecondary,
-    marginTop: 2,
-  },
-  alertBtnArrow: {
-    marginLeft: "auto",
-    fontSize: FONTSIZE.lg,
-    color: colors.danger,
-    fontFamily: FONTS.bold,
-  },
-  tripCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    backgroundColor: colors.surface,
-    borderRadius: RADIUS.md,
-    padding: SPACING.md,
-    marginBottom: SPACING.sm,
-    borderWidth: 1,
-    borderColor: colors.border,
-    ...SHADOW.sm,
-  },
-  tripLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: SPACING.sm,
-  },
-  tripIconCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: RADIUS.md,
-    backgroundColor: colors.inputBg,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  tripIcon: {
-    fontSize: 18,
-  },
-  tripName: {
-    fontSize: FONTSIZE.md,
-    fontFamily: FONTS.medium,
-    color: colors.textPrimary,
-  },
-  tripMeta: {
-    fontSize: FONTSIZE.xs,
-    fontFamily: FONTS.regular,
-    color: colors.textSecondary,
-    marginTop: 2,
-  },
-  tripDuration: {
-    fontSize: FONTSIZE.sm,
-    fontFamily: FONTS.medium,
-    color: colors.textSecondary,
-  },
-});
+const makeStyles = (colors) =>
+  StyleSheet.create({
+    root: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    scroll: {
+      flexGrow: 1,
+      paddingHorizontal: SPACING.lg,
+      paddingTop: SPACING.lg,
+      paddingBottom: SPACING.xxl,
+    },
+
+    // ── Header ───────────────────────────────────────
+    header: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "flex-start",
+      marginBottom: SPACING.lg,
+    },
+    greeting: {
+      fontSize: FONTSIZE.xl,
+      fontFamily: FONTS.bold,
+      color: colors.textPrimary,
+    },
+    subtitle: {
+      fontSize: FONTSIZE.sm,
+      fontFamily: FONTS.regular,
+      color: colors.textSecondary,
+      marginTop: 2,
+    },
+    logoutBtn: {
+      backgroundColor: colors.inputBg,
+      borderRadius: RADIUS.md,
+      paddingHorizontal: SPACING.md,
+      paddingVertical: SPACING.xs,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    logoutBtnText: {
+      fontSize: FONTSIZE.sm,
+      fontFamily: FONTS.medium,
+      color: colors.textSecondary,
+    },
+
+    // ── Action Buttons ────────────────────────────────
+    actionRow: {
+      flexDirection: "row",
+      gap: SPACING.md,
+      marginBottom: SPACING.xl,
+    },
+    actionBtn: {
+      flex: 1,
+      borderRadius: RADIUS.lg,
+      paddingVertical: SPACING.lg,
+      alignItems: "center",
+      borderWidth: 1,
+      borderColor: colors.border,
+      ...SHADOW.sm,
+    },
+    actionIcon: {
+      fontSize: 28,
+      marginBottom: SPACING.xs,
+    },
+    actionBtnText: {
+      fontSize: FONTSIZE.sm,
+      fontFamily: FONTS.bold,
+      color: colors.textWhite,
+    },
+
+    // ── Section Title ─────────────────────────────────
+    sectionTitle: {
+      fontSize: FONTSIZE.md,
+      fontFamily: FONTS.bold,
+      color: colors.textPrimary,
+      marginBottom: SPACING.md,
+    },
+
+    // ── Loading ───────────────────────────────────────
+    loadingBox: {
+      alignItems: "center",
+      paddingVertical: SPACING.xl,
+      gap: SPACING.sm,
+    },
+    loadingText: {
+      fontSize: FONTSIZE.sm,
+      fontFamily: FONTS.regular,
+      color: colors.textSecondary,
+    },
+
+    // ── Empty State ───────────────────────────────────
+    emptyBox: {
+      alignItems: "center",
+      paddingVertical: SPACING.xxl,
+      backgroundColor: colors.surface,
+      borderRadius: RADIUS.lg,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    emptyIcon: {
+      fontSize: 40,
+      marginBottom: SPACING.md,
+    },
+    emptyTitle: {
+      fontSize: FONTSIZE.md,
+      fontFamily: FONTS.bold,
+      color: colors.textPrimary,
+      marginBottom: SPACING.xs,
+    },
+    emptySub: {
+      fontSize: FONTSIZE.sm,
+      fontFamily: FONTS.regular,
+      color: colors.textSecondary,
+      textAlign: "center",
+      paddingHorizontal: SPACING.lg,
+    },
+
+    // ── Room Card ─────────────────────────────────────
+    roomCard: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      backgroundColor: colors.surface,
+      borderRadius: RADIUS.lg,
+      padding: SPACING.md,
+      marginBottom: SPACING.md,
+      borderWidth: 1,
+      borderColor: colors.border,
+      ...SHADOW.sm,
+    },
+    roomCardLeft: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: SPACING.md,
+    },
+    roomCardIcon: {
+      fontSize: 28,
+    },
+    roomCardName: {
+      fontSize: FONTSIZE.md,
+      fontFamily: FONTS.bold,
+      color: colors.textPrimary,
+    },
+    roomCardCode: {
+      fontSize: FONTSIZE.xs,
+      fontFamily: FONTS.regular,
+      color: colors.textSecondary,
+      marginTop: 2,
+    },
+    roomCardRight: {
+      alignItems: "flex-end",
+      gap: SPACING.xs,
+    },
+    roomCardMembers: {
+      fontSize: FONTSIZE.xs,
+      fontFamily: FONTS.regular,
+      color: colors.textSecondary,
+    },
+    roomCardActiveBadge: {
+      backgroundColor: "#E8F5E9",
+      borderRadius: RADIUS.sm,
+      paddingHorizontal: SPACING.sm,
+      paddingVertical: 2,
+    },
+    roomCardActiveBadgeText: {
+      fontSize: FONTSIZE.xs,
+      fontFamily: FONTS.medium,
+      color: "#2D6A4F",
+    },
+  });

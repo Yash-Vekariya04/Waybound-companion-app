@@ -170,4 +170,23 @@ async function endRoom(req, res) {
   }
 }
 
-module.exports = { createRoom, joinRoom, getRoom, endRoom };
+// ── Get My Rooms ─────────────────────────────────────
+async function getMyRooms(req, res) {
+  try {
+    const rooms = await Room.find({
+      members: req.user._id,
+      active: true,
+    })
+      .populate("host", "name avatar")
+      .sort({ createdAt: -1 }) // newest first
+      .limit(10);
+
+    res.json({ rooms });
+
+  } catch (error) {
+    console.error("Get my rooms error:", error.message);
+    res.status(500).json({ error: "Server error. Please try again." });
+  }
+}
+
+module.exports = { createRoom, joinRoom, getRoom, endRoom, getMyRooms };

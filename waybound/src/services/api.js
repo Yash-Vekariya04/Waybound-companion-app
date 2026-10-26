@@ -79,3 +79,7 @@ export async function savePushToken(pushToken) {
     body: JSON.stringify({ pushToken }),
   });
 }
+
+export async function getMyRooms() {
+  return request("/rooms/my-rooms");
+}
