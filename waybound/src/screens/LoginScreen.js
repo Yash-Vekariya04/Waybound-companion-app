@@ -8,6 +8,9 @@ import {
   StatusBar,
   ActivityIndicator,
   Alert,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { FONTS, RADIUS, SPACING, FONTSIZE, SHADOW } from "../constants/theme";
@@ -54,7 +57,6 @@ export default function LoginScreen({ navigation }) {
 
       await saveSession(result.user, result.token);
       navigation.replace("MainTabs");
-
     } catch (error) {
       Alert.alert("Error", error.message);
     } finally {
@@ -69,101 +71,107 @@ export default function LoginScreen({ navigation }) {
         backgroundColor={colors.background}
       />
 
-      <View style={s.container}>
+      <KeyboardAvoidingView
+        style={s.keyboardView}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
+      >
+        <ScrollView
+          contentContainerStyle={s.scrollContent}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={s.container}>
+            {/* ── Logo ── */}
+            <View style={s.logoArea}>
+              <Text style={s.logoIcon}>🧭</Text>
+              <Text style={s.logoText}>Waybound</Text>
+              <Text style={s.logoSub}>Ride together. Stay connected.</Text>
+            </View>
 
-        {/* ── Logo ── */}
-        <View style={s.logoArea}>
-          <Text style={s.logoIcon}>🧭</Text>
-          <Text style={s.logoText}>Waybound</Text>
-          <Text style={s.logoSub}>Ride together. Stay connected.</Text>
-        </View>
+            {/* ── Tab Toggle ── */}
+            <View style={s.tabRow}>
+              <TouchableOpacity
+                style={[s.tab, isLogin && s.tabActive]}
+                onPress={() => setIsLogin(true)}
+              >
+                <Text style={[s.tabText, isLogin && s.tabTextActive]}>
+                  Log In
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[s.tab, !isLogin && s.tabActive]}
+                onPress={() => setIsLogin(false)}
+              >
+                <Text style={[s.tabText, !isLogin && s.tabTextActive]}>
+                  Register
+                </Text>
+              </TouchableOpacity>
+            </View>
 
-        {/* ── Tab Toggle ── */}
-        <View style={s.tabRow}>
-          <TouchableOpacity
-            style={[s.tab, isLogin && s.tabActive]}
-            onPress={() => setIsLogin(true)}
-          >
-            <Text style={[s.tabText, isLogin && s.tabTextActive]}>
-              Log In
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[s.tab, !isLogin && s.tabActive]}
-            onPress={() => setIsLogin(false)}
-          >
-            <Text style={[s.tabText, !isLogin && s.tabTextActive]}>
-              Register
-            </Text>
-          </TouchableOpacity>
-        </View>
+            {/* ── Form ── */}
+            <View style={s.form}>
+              {!isLogin && (
+                <TextInput
+                  style={s.input}
+                  placeholder="Your name"
+                  placeholderTextColor={colors.textMuted}
+                  value={name}
+                  onChangeText={setName}
+                  autoCapitalize="words"
+                />
+              )}
+              <TextInput
+                style={s.input}
+                placeholder="Email address"
+                placeholderTextColor={colors.textMuted}
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+              <TextInput
+                style={s.input}
+                placeholder="Password"
+                placeholderTextColor={colors.textMuted}
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+                autoCapitalize="none"
+              />
 
-        {/* ── Form ── */}
-        <View style={s.form}>
+              <TouchableOpacity
+                style={[s.submitBtn, loading && s.submitBtnDisabled]}
+                onPress={handleSubmit}
+                disabled={loading}
+              >
+                {loading ? (
+                  <ActivityIndicator color={colors.textWhite} />
+                ) : (
+                  <Text style={s.submitBtnText}>
+                    {isLogin ? "Log In" : "Create Account"}
+                  </Text>
+                )}
+              </TouchableOpacity>
+            </View>
 
-          {/* Name field only shown on Register */}
-          {!isLogin && (
-            <TextInput
-              style={s.input}
-              placeholder="Your name"
-              placeholderTextColor={colors.textMuted}
-              value={name}
-              onChangeText={setName}
-              autoCapitalize="words"
-            />
-          )}
-
-          <TextInput
-            style={s.input}
-            placeholder="Email address"
-            placeholderTextColor={colors.textMuted}
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            autoCorrect={false}
-          />
-
-          <TextInput
-            style={s.input}
-            placeholder="Password"
-            placeholderTextColor={colors.textMuted}
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-            autoCapitalize="none"
-          />
-
-          {/* ── Submit Button ── */}
-          <TouchableOpacity
-            style={[s.submitBtn, loading && s.submitBtnDisabled]}
-            onPress={handleSubmit}
-            disabled={loading}
-          >
-            {loading ? (
-              <ActivityIndicator color={colors.textWhite} />
-            ) : (
-              <Text style={s.submitBtnText}>
-                {isLogin ? "Log In" : "Create Account"}
+            {/* ── Switch Mode Hint ── */}
+            <View style={s.switchRow}>
+              <Text style={s.switchText}>
+                {isLogin
+                  ? "Don't have an account?"
+                  : "Already have an account?"}
               </Text>
-            )}
-          </TouchableOpacity>
-
-        </View>
-
-        {/* ── Switch Mode Hint ── */}
-        <View style={s.switchRow}>
-          <Text style={s.switchText}>
-            {isLogin ? "Don't have an account?" : "Already have an account?"}
-          </Text>
-          <TouchableOpacity onPress={() => setIsLogin(!isLogin)}>
-            <Text style={s.switchLink}>
-              {isLogin ? " Register" : " Log In"}
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-      </View>
+              <TouchableOpacity onPress={() => setIsLogin(!isLogin)}>
+                <Text style={s.switchLink}>
+                  {isLogin ? " Register" : " Log In"}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
@@ -277,5 +285,12 @@ const makeStyles = (colors) =>
       fontSize: FONTSIZE.sm,
       fontFamily: FONTS.bold,
       color: colors.primary,
+    },
+    keyboardView: {
+      flex: 1,
+    },
+    scrollContent: {
+      flexGrow: 1,
+      justifyContent: "center",
     },
   });
