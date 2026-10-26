@@ -51,14 +51,18 @@ export default function LoginScreen({ navigation }) {
       }
 
       await saveSession(result.user, result.token);
-      // Register for push notifications
+      // Register for push notifications safely
       try {
         const pushToken = await registerForPushNotifications();
         if (pushToken) {
           await savePushToken(pushToken);
+          console.log("✅ Push token saved");
+        } else {
+          console.log("ℹ️ No push token (Expo Go limitation)");
         }
       } catch (e) {
-        console.log("Push token error:", e.message);
+        // Never let push token errors block login
+        console.log("ℹ️ Push token skipped:", e.message);
       }
       navigation.replace("MainTabs");
     } catch (error) {

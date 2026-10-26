@@ -20,21 +20,38 @@ export default function App() {
   const responseListener = useRef();
 
   useEffect(() => {
-    // When a notification is received while app is open
-    notificationListener.current =
-      Notifications.addNotificationReceivedListener((notification) => {
-        console.log("🔔 Notification received:", notification);
-      });
+    let notificationListener;
+    let responseListener;
 
-    // When user taps the notification
-    responseListener.current =
-      Notifications.addNotificationResponseReceivedListener((response) => {
-        console.log("👆 Notification tapped:", response);
-      });
+    try {
+      // When a notification is received while app is open
+      notificationListener = Notifications.addNotificationReceivedListener(
+        (notification) => {
+          console.log("🔔 Notification received:", notification);
+        },
+      );
+
+      // When user taps the notification
+      responseListener = Notifications.addNotificationResponseReceivedListener(
+        (response) => {
+          console.log("👆 Notification tapped:", response);
+        },
+      );
+    } catch (error) {
+      console.log("ℹ️ Notification listeners skipped:", error.message);
+    }
 
     return () => {
-      Notifications.removeNotificationSubscription(notificationListener.current);
-      Notifications.removeNotificationSubscription(responseListener.current);
+      try {
+        if (notificationListener) {
+          Notifications.removeNotificationSubscription(notificationListener);
+        }
+        if (responseListener) {
+          Notifications.removeNotificationSubscription(responseListener);
+        }
+      } catch (error) {
+        console.log("ℹ️ Notification cleanup skipped:", error.message);
+      }
     };
   }, []);
 
