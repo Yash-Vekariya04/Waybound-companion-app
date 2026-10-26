@@ -1,4 +1,3 @@
-import { showSOSNotification } from "../utils/notifications";
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
   View,
@@ -80,12 +79,6 @@ export default function LiveTrackingScreen({ navigation, route }) {
       });
 
       socket.on("safety_alert_received", (data) => {
-        // Show local notification
-        showSOSNotification({
-          senderName: data.name,
-          message: data.message,
-        });
-
         // Also show an Alert popup
         Alert.alert(`🚨 SOS from ${data.name}`, data.message, [{ text: "OK" }]);
       });

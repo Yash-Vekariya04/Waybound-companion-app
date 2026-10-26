@@ -1,4 +1,3 @@
-import { registerForPushNotifications } from "../utils/notifications";
 import React, { useState } from "react";
 import {
   View,
@@ -14,7 +13,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { FONTS, RADIUS, SPACING, FONTSIZE, SHADOW } from "../constants/theme";
 import { useTheme } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
-import { loginUser, registerUser, savePushToken } from "../services/api";
+import { loginUser, registerUser } from "../services/api";
 
 export default function LoginScreen({ navigation }) {
   const { isDark, colors } = useTheme();
@@ -41,7 +40,10 @@ export default function LoginScreen({ navigation }) {
     try {
       let result;
       if (isLogin) {
-        result = await loginUser({ email: email.trim(), password });
+        result = await loginUser({
+          email: email.trim(),
+          password,
+        });
       } else {
         result = await registerUser({
           name: name.trim(),
@@ -51,20 +53,8 @@ export default function LoginScreen({ navigation }) {
       }
 
       await saveSession(result.user, result.token);
-      // Register for push notifications safely
-      try {
-        const pushToken = await registerForPushNotifications();
-        if (pushToken) {
-          await savePushToken(pushToken);
-          console.log("✅ Push token saved");
-        } else {
-          console.log("ℹ️ No push token (Expo Go limitation)");
-        }
-      } catch (e) {
-        // Never let push token errors block login
-        console.log("ℹ️ Push token skipped:", e.message);
-      }
       navigation.replace("MainTabs");
+
     } catch (error) {
       Alert.alert("Error", error.message);
     } finally {
@@ -80,6 +70,7 @@ export default function LoginScreen({ navigation }) {
       />
 
       <View style={s.container}>
+
         {/* ── Logo ── */}
         <View style={s.logoArea}>
           <Text style={s.logoIcon}>🧭</Text>
@@ -93,7 +84,9 @@ export default function LoginScreen({ navigation }) {
             style={[s.tab, isLogin && s.tabActive]}
             onPress={() => setIsLogin(true)}
           >
-            <Text style={[s.tabText, isLogin && s.tabTextActive]}>Log In</Text>
+            <Text style={[s.tabText, isLogin && s.tabTextActive]}>
+              Log In
+            </Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[s.tab, !isLogin && s.tabActive]}
@@ -107,6 +100,8 @@ export default function LoginScreen({ navigation }) {
 
         {/* ── Form ── */}
         <View style={s.form}>
+
+          {/* Name field only shown on Register */}
           {!isLogin && (
             <TextInput
               style={s.input}
@@ -117,6 +112,7 @@ export default function LoginScreen({ navigation }) {
               autoCapitalize="words"
             />
           )}
+
           <TextInput
             style={s.input}
             placeholder="Email address"
@@ -125,7 +121,9 @@ export default function LoginScreen({ navigation }) {
             onChangeText={setEmail}
             keyboardType="email-address"
             autoCapitalize="none"
+            autoCorrect={false}
           />
+
           <TextInput
             style={s.input}
             placeholder="Password"
@@ -133,8 +131,10 @@ export default function LoginScreen({ navigation }) {
             value={password}
             onChangeText={setPassword}
             secureTextEntry
+            autoCapitalize="none"
           />
 
+          {/* ── Submit Button ── */}
           <TouchableOpacity
             style={[s.submitBtn, loading && s.submitBtnDisabled]}
             onPress={handleSubmit}
@@ -148,7 +148,21 @@ export default function LoginScreen({ navigation }) {
               </Text>
             )}
           </TouchableOpacity>
+
         </View>
+
+        {/* ── Switch Mode Hint ── */}
+        <View style={s.switchRow}>
+          <Text style={s.switchText}>
+            {isLogin ? "Don't have an account?" : "Already have an account?"}
+          </Text>
+          <TouchableOpacity onPress={() => setIsLogin(!isLogin)}>
+            <Text style={s.switchLink}>
+              {isLogin ? " Register" : " Log In"}
+            </Text>
+          </TouchableOpacity>
+        </View>
+
       </View>
     </SafeAreaView>
   );
@@ -156,17 +170,24 @@ export default function LoginScreen({ navigation }) {
 
 const makeStyles = (colors) =>
   StyleSheet.create({
-    root: { flex: 1, backgroundColor: colors.background },
+    root: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
     container: {
       flex: 1,
       paddingHorizontal: SPACING.lg,
       justifyContent: "center",
     },
+
+    // ── Logo ──────────────────────────────────────────
     logoArea: {
       alignItems: "center",
       marginBottom: SPACING.xxl,
     },
-    logoIcon: { fontSize: 52 },
+    logoIcon: {
+      fontSize: 52,
+    },
     logoText: {
       fontSize: FONTSIZE.xxl,
       fontFamily: FONTS.bold,
@@ -179,6 +200,8 @@ const makeStyles = (colors) =>
       color: colors.textSecondary,
       marginTop: SPACING.xs,
     },
+
+    // ── Tab Toggle ────────────────────────────────────
     tabRow: {
       flexDirection: "row",
       backgroundColor: colors.inputBg,
@@ -205,7 +228,11 @@ const makeStyles = (colors) =>
       color: colors.primary,
       fontFamily: FONTS.bold,
     },
-    form: { gap: SPACING.md },
+
+    // ── Form ──────────────────────────────────────────
+    form: {
+      gap: SPACING.md,
+    },
     input: {
       backgroundColor: colors.inputBg,
       borderRadius: RADIUS.md,
@@ -225,10 +252,30 @@ const makeStyles = (colors) =>
       marginTop: SPACING.sm,
       ...SHADOW.md,
     },
-    submitBtnDisabled: { opacity: 0.6 },
+    submitBtnDisabled: {
+      opacity: 0.6,
+    },
     submitBtnText: {
       fontSize: FONTSIZE.lg,
       fontFamily: FONTS.bold,
       color: colors.textWhite,
+    },
+
+    // ── Switch Mode ───────────────────────────────────
+    switchRow: {
+      flexDirection: "row",
+      justifyContent: "center",
+      alignItems: "center",
+      marginTop: SPACING.lg,
+    },
+    switchText: {
+      fontSize: FONTSIZE.sm,
+      fontFamily: FONTS.regular,
+      color: colors.textSecondary,
+    },
+    switchLink: {
+      fontSize: FONTSIZE.sm,
+      fontFamily: FONTS.bold,
+      color: colors.primary,
     },
   });

@@ -27,14 +27,6 @@
     "plugins": [
       "expo-font",
       [
-        "expo-notifications",
-        {
-          "icon": "./assets/icon.png",
-          "color": "#2D6A4F",
-          "sounds": []
-        }
-      ],
-      [
         "expo-location",
         {
           "locationAlwaysAndWhenInUsePermission": "Waybound needs your location to track your ride and share it with your group."
