@@ -2,7 +2,6 @@ const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
-const mongoSanitize = require("express-mongo-sanitize");
 const authRoutes = require("./routes/authRoutes");
 const roomRoutes = require("./routes/roomRoutes");
 require("dotenv").config();
@@ -14,14 +13,14 @@ app.use(helmet());
 
 // ── CORS ─────────────────────────────────────────────
 app.use(cors({
-  origin: "*", // tightened in production
+  origin: "*",
   methods: ["GET", "POST", "PATCH", "DELETE"],
   allowedHeaders: ["Content-Type", "Authorization"],
 }));
 
 // ── Rate Limiting ─────────────────────────────────────
 const globalLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
+  windowMs: 15 * 60 * 1000,
   max: 100,
   message: { error: "Too many requests. Please try again later." },
 });
@@ -30,16 +29,13 @@ app.use(globalLimiter);
 // ── Stricter limit for auth routes ───────────────────
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 10, // only 10 login/register attempts per 15 min
+  max: 10,
   message: { error: "Too many auth attempts. Please try again later." },
 });
 app.use("/api/auth", authLimiter);
 
 // ── Body Parser ───────────────────────────────────────
-app.use(express.json({ limit: "10kb" })); // limit body size
-
-// ── Sanitize MongoDB Queries ──────────────────────────
-app.use(mongoSanitize());
+app.use(express.json({ limit: "10kb" }));
 
 // ── Routes ────────────────────────────────────────────
 app.use("/api/auth", authRoutes);
