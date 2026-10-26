@@ -25,6 +25,10 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: "🧍",
     },
+    pushtoken: {
+      type: String,
+      default: null,
+    },
   },
   {
     timestamps: true, // adds createdAt and updatedAt automatically

@@ -103,4 +103,23 @@ async function login(req, res) {
   }
 }
 
-module.exports = { register, login };
+// ── Save Push Token ──────────────────────────────────
+async function savePushToken(req, res) {
+  try {
+    const { pushToken } = req.body;
+
+    if (!pushToken) {
+      return res.status(400).json({ error: "Push token is required" });
+    }
+
+    await User.findByIdAndUpdate(req.user._id, { pushToken });
+
+    res.json({ message: "Push token saved successfully" });
+
+  } catch (error) {
+    console.error("Save push token error:", error.message);
+    res.status(500).json({ error: "Server error. Please try again." });
+  }
+}
+
+module.exports = { register, login, savePushToken };

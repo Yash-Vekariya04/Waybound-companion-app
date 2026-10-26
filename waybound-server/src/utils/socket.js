@@ -1,3 +1,4 @@
+const { sendPushNotification } = require("./pushNotification");
 const { Server } = require("socket.io");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
@@ -31,7 +32,6 @@ function initSocket(server) {
       // Attach user to socket
       socket.user = user;
       next();
-
     } catch (error) {
       next(new Error("Invalid token"));
     }
@@ -53,10 +53,12 @@ function initSocket(server) {
 
         // Check user is a member
         const isMember = room.members.some(
-          (m) => m.toString() === socket.user._id.toString()
+          (m) => m.toString() === socket.user._id.toString(),
         );
         if (!isMember) {
-          socket.emit("error", { message: "You are not a member of this room." });
+          socket.emit("error", {
+            message: "You are not a member of this room.",
+          });
           return;
         }
 
@@ -86,7 +88,6 @@ function initSocket(server) {
         });
 
         console.log(`📍 ${socket.user.name} joined room ${roomCode}`);
-
       } catch (error) {
         console.error("join_room error:", error.message);
         socket.emit("error", { message: "Could not join room." });
@@ -111,21 +112,48 @@ function initSocket(server) {
       });
     });
 
-    // ── Safety Alert ───────────────────────────────────
-    socket.on("safety_alert", ({ roomCode, latitude, longitude, message }) => {
-      // Broadcast SOS to everyone in the room including sender
-      io.to(roomCode).emit("safety_alert_received", {
-        userId: socket.user._id,
-        name: socket.user.name,
-        avatar: socket.user.avatar,
-        latitude,
-        longitude,
-        message: message || "SOS! I need help!",
-        timestamp: new Date().toISOString(),
-      });
+    // ── Safety Alert ───────────────────────────────────────
+    socket.on(
+      "safety_alert",
+      async ({ roomCode, latitude, longitude, message }) => {
+        // Broadcast SOS to everyone in the room via socket
+        io.to(roomCode).emit("safety_alert_received", {
+          userId: socket.user._id,
+          name: socket.user.name,
+          avatar: socket.user.avatar,
+          latitude,
+          longitude,
+          message: message || "SOS! I need help!",
+          timestamp: new Date().toISOString(),
+        });
 
-      console.log(`🚨 SOS from ${socket.user.name} in room ${roomCode}`);
-    });
+        console.log(`🚨 SOS from ${socket.user.name} in room ${roomCode}`);
+
+        // ── Send push notification to all room members ──────
+        try {
+          const room = await Room.findOne({ code: roomCode }).populate(
+            "members",
+            "pushToken name",
+          );
+
+          if (room) {
+            // Get all push tokens except the sender
+            const tokens = room.members
+              .filter((m) => m._id.toString() !== socket.user._id.toString())
+              .map((m) => m.pushToken)
+              .filter(Boolean);
+
+            await sendPushNotification({
+              tokens,
+              title: `🚨 SOS from ${socket.user.name}`,
+              body: message || "SOS! I need help! Check Waybound.",
+            });
+          }
+        } catch (error) {
+          console.error("Push notification send error:", error.message);
+        }
+      },
+    );
 
     // ── Leave Room ─────────────────────────────────────
     socket.on("leave_room", ({ roomCode }) => {

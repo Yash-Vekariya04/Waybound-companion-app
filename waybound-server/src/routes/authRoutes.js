@@ -30,5 +30,6 @@ const loginRules = [
 // ── Routes ───────────────────────────────────────────
 router.post("/register", registerRules, register);
 router.post("/login", loginRules, login);
+router.post("/push-token", protect, savePushToken);
 
 module.exports = router;

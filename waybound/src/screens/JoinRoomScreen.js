@@ -1,14 +1,23 @@
 import React, { useState, useRef } from "react";
 import {
-  View, Text, StyleSheet, TouchableOpacity,
-  TextInput, StatusBar, ScrollView, Keyboard
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  TextInput,
+  StatusBar,
+  ScrollView,
+  Keyboard,
+  Alert,
+  ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { FONTS, RADIUS, SPACING, FONTSIZE, SHADOW } from "../constants/theme";
 import { useTheme } from "../context/ThemeContext";
+import { joinRoom } from "../services/api";
 
 const RECENT_CODES = [
-  { id: "1", name: "Coastal Ride",  code: "WB-K7NP", members: 4, icon: "🚴" },
+  { id: "1", name: "Coastal Ride", code: "WB-K7NP", members: 4, icon: "🚴" },
   { id: "2", name: "Mountain Loop", code: "WB-3QXM", members: 6, icon: "🥾" },
 ];
 
@@ -18,6 +27,7 @@ export default function JoinRoomScreen({ navigation }) {
 
   const [code, setCode] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const inputRef = useRef(null);
 
   const handleCodeChange = (text) => {
@@ -66,7 +76,6 @@ export default function JoinRoomScreen({ navigation }) {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-
         {/* ── Hero ── */}
         <View style={s.heroSection}>
           <View style={s.heroIconCircle}>
@@ -103,10 +112,25 @@ export default function JoinRoomScreen({ navigation }) {
         {/* ── Join Button ── */}
         <TouchableOpacity
           style={[s.joinBtn, code.length < 7 && s.joinBtnDisabled]}
-          onPress={handleJoin}
-          disabled={code.length < 7}
+          onPress={async () => {
+            if (!code.trim()) return;
+            setLoading(true);
+            try {
+              const result = await joinRoom({ code: code.trim() });
+              navigation.navigate("LiveTracking", { room: result.room });
+            } catch (error) {
+              Alert.alert("Error", error.message);
+            } finally {
+              setLoading(false);
+            }
+          }}
+          disabled={!code.trim() || loading}
         >
-          <Text style={s.joinBtnText}>Join Room →</Text>
+          {loading ? (
+            <ActivityIndicator color={colors.textWhite} />
+          ) : (
+            <Text style={s.joinBtnText}>Join Room</Text>
+          )}
         </TouchableOpacity>
 
         {/* ── Divider ── */}
@@ -137,184 +161,184 @@ export default function JoinRoomScreen({ navigation }) {
             <Text style={s.recentArrow}>→</Text>
           </TouchableOpacity>
         ))}
-
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-const makeStyles = (colors) => StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  topBar: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.md,
-    backgroundColor: colors.background,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  backBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: RADIUS.md,
-    backgroundColor: colors.inputBg,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  backArrow: {
-    fontSize: FONTSIZE.xl,
-    color: colors.textPrimary,
-    fontFamily: FONTS.medium,
-  },
-  topBarTitle: {
-    fontSize: FONTSIZE.lg,
-    fontFamily: FONTS.bold,
-    color: colors.textPrimary,
-  },
-  scroll: {
-    flexGrow: 1,
-    paddingHorizontal: SPACING.lg,
-    paddingTop: SPACING.lg,
-    paddingBottom: SPACING.xxl,
-  },
-  heroSection: {
-    alignItems: "center",
-    marginBottom: SPACING.xl,
-  },
-  heroIconCircle: {
-    width: 72,
-    height: 72,
-    borderRadius: RADIUS.xl,
-    backgroundColor: colors.surface,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: SPACING.md,
-    ...SHADOW.md,
-  },
-  heroIcon: { fontSize: 36 },
-  heroTitle: {
-    fontSize: FONTSIZE.xxl,
-    fontFamily: FONTS.bold,
-    color: colors.textPrimary,
-    marginBottom: SPACING.xs,
-  },
-  heroSub: {
-    fontSize: FONTSIZE.md,
-    fontFamily: FONTS.regular,
-    color: colors.textSecondary,
-    textAlign: "center",
-    lineHeight: 22,
-  },
-  inputWrapper: {
-    marginBottom: SPACING.lg,
-  },
-  codeInput: {
-    backgroundColor: colors.inputBg,
-    borderRadius: RADIUS.lg,
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.md,
-    fontSize: FONTSIZE.huge,
-    fontFamily: FONTS.bold,
-    color: colors.primary,
-    borderWidth: 2,
-    borderColor: colors.border,
-    textAlign: "center",
-    letterSpacing: 4,
-  },
-  codeInputError: {
-    borderColor: colors.danger,
-  },
-  inputHint: {
-    fontSize: FONTSIZE.xs,
-    fontFamily: FONTS.regular,
-    color: colors.textMuted,
-    textAlign: "center",
-    marginTop: SPACING.sm,
-  },
-  errorText: {
-    fontSize: FONTSIZE.sm,
-    fontFamily: FONTS.medium,
-    color: colors.danger,
-    textAlign: "center",
-    marginTop: SPACING.sm,
-  },
-  joinBtn: {
-    backgroundColor: colors.primary,
-    borderRadius: RADIUS.lg,
-    paddingVertical: SPACING.md,
-    alignItems: "center",
-    marginBottom: SPACING.lg,
-    ...SHADOW.md,
-  },
-  joinBtnDisabled: {
-    backgroundColor: colors.border,
-  },
-  joinBtnText: {
-    fontSize: FONTSIZE.lg,
-    fontFamily: FONTS.bold,
-    color: colors.textWhite,
-  },
-  dividerRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: SPACING.lg,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: colors.border,
-  },
-  dividerText: {
-    fontSize: FONTSIZE.sm,
-    fontFamily: FONTS.regular,
-    color: colors.textMuted,
-    marginHorizontal: SPACING.sm,
-  },
-  recentCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    backgroundColor: colors.surface,
-    borderRadius: RADIUS.md,
-    padding: SPACING.md,
-    marginBottom: SPACING.sm,
-    borderWidth: 1,
-    borderColor: colors.border,
-    ...SHADOW.sm,
-  },
-  recentLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: SPACING.sm,
-  },
-  recentIconCircle: {
-    width: 42,
-    height: 42,
-    borderRadius: RADIUS.md,
-    backgroundColor: colors.inputBg,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  recentIcon: { fontSize: 20 },
-  recentName: {
-    fontSize: FONTSIZE.md,
-    fontFamily: FONTS.medium,
-    color: colors.textPrimary,
-  },
-  recentMeta: {
-    fontSize: FONTSIZE.xs,
-    fontFamily: FONTS.regular,
-    color: colors.textSecondary,
-    marginTop: 2,
-  },
-  recentArrow: {
-    fontSize: FONTSIZE.lg,
-    color: colors.textMuted,
-    fontFamily: FONTS.medium,
-  },
-});
+const makeStyles = (colors) =>
+  StyleSheet.create({
+    root: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    topBar: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      paddingHorizontal: SPACING.lg,
+      paddingVertical: SPACING.md,
+      backgroundColor: colors.background,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+    backBtn: {
+      width: 40,
+      height: 40,
+      borderRadius: RADIUS.md,
+      backgroundColor: colors.inputBg,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    backArrow: {
+      fontSize: FONTSIZE.xl,
+      color: colors.textPrimary,
+      fontFamily: FONTS.medium,
+    },
+    topBarTitle: {
+      fontSize: FONTSIZE.lg,
+      fontFamily: FONTS.bold,
+      color: colors.textPrimary,
+    },
+    scroll: {
+      flexGrow: 1,
+      paddingHorizontal: SPACING.lg,
+      paddingTop: SPACING.lg,
+      paddingBottom: SPACING.xxl,
+    },
+    heroSection: {
+      alignItems: "center",
+      marginBottom: SPACING.xl,
+    },
+    heroIconCircle: {
+      width: 72,
+      height: 72,
+      borderRadius: RADIUS.xl,
+      backgroundColor: colors.surface,
+      alignItems: "center",
+      justifyContent: "center",
+      marginBottom: SPACING.md,
+      ...SHADOW.md,
+    },
+    heroIcon: { fontSize: 36 },
+    heroTitle: {
+      fontSize: FONTSIZE.xxl,
+      fontFamily: FONTS.bold,
+      color: colors.textPrimary,
+      marginBottom: SPACING.xs,
+    },
+    heroSub: {
+      fontSize: FONTSIZE.md,
+      fontFamily: FONTS.regular,
+      color: colors.textSecondary,
+      textAlign: "center",
+      lineHeight: 22,
+    },
+    inputWrapper: {
+      marginBottom: SPACING.lg,
+    },
+    codeInput: {
+      backgroundColor: colors.inputBg,
+      borderRadius: RADIUS.lg,
+      paddingHorizontal: SPACING.lg,
+      paddingVertical: SPACING.md,
+      fontSize: FONTSIZE.huge,
+      fontFamily: FONTS.bold,
+      color: colors.primary,
+      borderWidth: 2,
+      borderColor: colors.border,
+      textAlign: "center",
+      letterSpacing: 4,
+    },
+    codeInputError: {
+      borderColor: colors.danger,
+    },
+    inputHint: {
+      fontSize: FONTSIZE.xs,
+      fontFamily: FONTS.regular,
+      color: colors.textMuted,
+      textAlign: "center",
+      marginTop: SPACING.sm,
+    },
+    errorText: {
+      fontSize: FONTSIZE.sm,
+      fontFamily: FONTS.medium,
+      color: colors.danger,
+      textAlign: "center",
+      marginTop: SPACING.sm,
+    },
+    joinBtn: {
+      backgroundColor: colors.primary,
+      borderRadius: RADIUS.lg,
+      paddingVertical: SPACING.md,
+      alignItems: "center",
+      marginBottom: SPACING.lg,
+      ...SHADOW.md,
+    },
+    joinBtnDisabled: {
+      backgroundColor: colors.border,
+    },
+    joinBtnText: {
+      fontSize: FONTSIZE.lg,
+      fontFamily: FONTS.bold,
+      color: colors.textWhite,
+    },
+    dividerRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      marginBottom: SPACING.lg,
+    },
+    dividerLine: {
+      flex: 1,
+      height: 1,
+      backgroundColor: colors.border,
+    },
+    dividerText: {
+      fontSize: FONTSIZE.sm,
+      fontFamily: FONTS.regular,
+      color: colors.textMuted,
+      marginHorizontal: SPACING.sm,
+    },
+    recentCard: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      backgroundColor: colors.surface,
+      borderRadius: RADIUS.md,
+      padding: SPACING.md,
+      marginBottom: SPACING.sm,
+      borderWidth: 1,
+      borderColor: colors.border,
+      ...SHADOW.sm,
+    },
+    recentLeft: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: SPACING.sm,
+    },
+    recentIconCircle: {
+      width: 42,
+      height: 42,
+      borderRadius: RADIUS.md,
+      backgroundColor: colors.inputBg,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    recentIcon: { fontSize: 20 },
+    recentName: {
+      fontSize: FONTSIZE.md,
+      fontFamily: FONTS.medium,
+      color: colors.textPrimary,
+    },
+    recentMeta: {
+      fontSize: FONTSIZE.xs,
+      fontFamily: FONTS.regular,
+      color: colors.textSecondary,
+      marginTop: 2,
+    },
+    recentArrow: {
+      fontSize: FONTSIZE.lg,
+      color: colors.textMuted,
+      fontFamily: FONTS.medium,
+    },
+  });

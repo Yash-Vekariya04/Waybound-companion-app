@@ -1,61 +1,102 @@
+import { registerForPushNotifications } from "../utils/notifications";
 import React, { useState } from "react";
 import {
-  View, Text, TextInput, TouchableOpacity,
-  StyleSheet, KeyboardAvoidingView, ScrollView,
-  Platform, StatusBar
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  TextInput,
+  StatusBar,
+  ActivityIndicator,
+  Alert,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { FONTS, RADIUS, SPACING, FONTSIZE, SHADOW } from "../constants/theme";
 import { useTheme } from "../context/ThemeContext";
+import { useAuth } from "../context/AuthContext";
+import { loginUser, registerUser, savePushToken } from "../services/api";
 
 export default function LoginScreen({ navigation }) {
   const { isDark, colors } = useTheme();
+  const { saveSession } = useAuth();
   const s = makeStyles(colors);
 
   const [isLogin, setIsLogin] = useState(true);
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [name, setName] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  async function handleSubmit() {
+    if (!email.trim() || !password.trim()) {
+      Alert.alert("Missing fields", "Please enter your email and password.");
+      return;
+    }
+    if (!isLogin && !name.trim()) {
+      Alert.alert("Missing fields", "Please enter your name.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      let result;
+      if (isLogin) {
+        result = await loginUser({ email: email.trim(), password });
+      } else {
+        result = await registerUser({
+          name: name.trim(),
+          email: email.trim(),
+          password,
+        });
+      }
+
+      await saveSession(result.user, result.token);
+      // Register for push notifications
+      try {
+        const pushToken = await registerForPushNotifications();
+        if (pushToken) {
+          await savePushToken(pushToken);
+        }
+      } catch (e) {
+        console.log("Push token error:", e.message);
+      }
+      navigation.replace("MainTabs");
+    } catch (error) {
+      Alert.alert("Error", error.message);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
-    <KeyboardAvoidingView
-      style={s.root}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-    >
+    <SafeAreaView style={s.root}>
       <StatusBar
         barStyle={isDark ? "light-content" : "dark-content"}
         backgroundColor={colors.background}
       />
-      <ScrollView
-        contentContainerStyle={s.scroll}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-      >
 
-        {/* ── Logo & Headline ── */}
-        <View style={s.heroSection}>
-          <View style={s.logoCircle}>
-            <Text style={s.logoEmoji}>🧭</Text>
-          </View>
-          <Text style={s.appName}>Waybound</Text>
-          <Text style={s.tagline}>Ride together. Stay safe.</Text>
+      <View style={s.container}>
+        {/* ── Logo ── */}
+        <View style={s.logoArea}>
+          <Text style={s.logoIcon}>🧭</Text>
+          <Text style={s.logoText}>Waybound</Text>
+          <Text style={s.logoSub}>Ride together. Stay connected.</Text>
         </View>
 
-        {/* ── Toggle ── */}
-        <View style={s.toggleRow}>
+        {/* ── Tab Toggle ── */}
+        <View style={s.tabRow}>
           <TouchableOpacity
-            style={[s.toggleBtn, isLogin && s.toggleActive]}
+            style={[s.tab, isLogin && s.tabActive]}
             onPress={() => setIsLogin(true)}
           >
-            <Text style={[s.toggleText, isLogin && s.toggleTextActive]}>
-              Log In
-            </Text>
+            <Text style={[s.tabText, isLogin && s.tabTextActive]}>Log In</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[s.toggleBtn, !isLogin && s.toggleActive]}
+            style={[s.tab, !isLogin && s.tabActive]}
             onPress={() => setIsLogin(false)}
           >
-            <Text style={[s.toggleText, !isLogin && s.toggleTextActive]}>
-              Sign Up
+            <Text style={[s.tabText, !isLogin && s.tabTextActive]}>
+              Register
             </Text>
           </TouchableOpacity>
         </View>
@@ -63,274 +104,127 @@ export default function LoginScreen({ navigation }) {
         {/* ── Form ── */}
         <View style={s.form}>
           {!isLogin && (
-            <View style={s.inputWrapper}>
-              <Text style={s.inputLabel}>Full Name</Text>
-              <TextInput
-                style={s.input}
-                placeholder="Your name"
-                placeholderTextColor={colors.textMuted}
-                value={name}
-                onChangeText={setName}
-                autoCapitalize="words"
-              />
-            </View>
-          )}
-
-          <View style={s.inputWrapper}>
-            <Text style={s.inputLabel}>Email</Text>
             <TextInput
               style={s.input}
-              placeholder="you@email.com"
+              placeholder="Your name"
               placeholderTextColor={colors.textMuted}
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
+              value={name}
+              onChangeText={setName}
+              autoCapitalize="words"
             />
-          </View>
-
-          <View style={s.inputWrapper}>
-            <Text style={s.inputLabel}>Password</Text>
-            <TextInput
-              style={s.input}
-              placeholder="••••••••"
-              placeholderTextColor={colors.textMuted}
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-            />
-          </View>
-
-          {isLogin && (
-            <TouchableOpacity style={s.forgotBtn}>
-              <Text style={s.forgotText}>Forgot password?</Text>
-            </TouchableOpacity>
           )}
+          <TextInput
+            style={s.input}
+            placeholder="Email address"
+            placeholderTextColor={colors.textMuted}
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+            autoCapitalize="none"
+          />
+          <TextInput
+            style={s.input}
+            placeholder="Password"
+            placeholderTextColor={colors.textMuted}
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry
+          />
 
           <TouchableOpacity
-            style={s.primaryBtn}
-            onPress={() => navigation.navigate("Home")}
+            style={[s.submitBtn, loading && s.submitBtnDisabled]}
+            onPress={handleSubmit}
+            disabled={loading}
           >
-            <Text style={s.primaryBtnText}>
-              {isLogin ? "Log In" : "Create Account"}
-            </Text>
+            {loading ? (
+              <ActivityIndicator color={colors.textWhite} />
+            ) : (
+              <Text style={s.submitBtnText}>
+                {isLogin ? "Log In" : "Create Account"}
+              </Text>
+            )}
           </TouchableOpacity>
         </View>
-
-        {/* ── Divider ── */}
-        <View style={s.dividerRow}>
-          <View style={s.dividerLine} />
-          <Text style={s.dividerText}>or continue with</Text>
-          <View style={s.dividerLine} />
-        </View>
-
-        {/* ── Social Buttons ── */}
-        <View style={s.socialRow}>
-          <TouchableOpacity style={s.socialBtn}>
-            <Text style={s.socialIcon}>G</Text>
-            <Text style={s.socialLabel}>Google</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={s.socialBtn}>
-            <Text style={s.socialIcon}></Text>
-            <Text style={s.socialLabel}>Apple</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={s.socialBtn}>
-            <Text style={s.socialIcon}>𝕏</Text>
-            <Text style={s.socialLabel}>X</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* ── Guest Button ── */}
-        <TouchableOpacity
-          style={s.guestBtn}
-          onPress={() => navigation.navigate("Home")}
-        >
-          <Text style={s.guestText}>Continue as Guest</Text>
-        </TouchableOpacity>
-        <Text style={s.guestDisclaimer}>
-          Guest sessions are temporary. Your rooms and history won't be saved.
-        </Text>
-
-      </ScrollView>
-    </KeyboardAvoidingView>
+      </View>
+    </SafeAreaView>
   );
 }
 
-const makeStyles = (colors) => StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  scroll: {
-    flexGrow: 1,
-    paddingHorizontal: SPACING.lg,
-    paddingTop: SPACING.xxl + 10,
-    paddingBottom: SPACING.xxl,
-  },
-  heroSection: {
-    alignItems: "center",
-    marginBottom: SPACING.xl,
-  },
-  logoCircle: {
-    width: 72,
-    height: 72,
-    borderRadius: RADIUS.xl,
-    backgroundColor: colors.surface,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: SPACING.sm,
-    ...SHADOW.md,
-  },
-  logoEmoji: {
-    fontSize: 36,
-  },
-  appName: {
-    fontSize: FONTSIZE.huge,
-    fontFamily: FONTS.bold,
-    color: colors.textPrimary,
-    letterSpacing: 0.5,
-  },
-  tagline: {
-    fontSize: FONTSIZE.md,
-    fontFamily: FONTS.regular,
-    color: colors.textSecondary,
-    marginTop: SPACING.xs,
-  },
-  toggleRow: {
-    flexDirection: "row",
-    backgroundColor: colors.inputBg,
-    borderRadius: RADIUS.lg,
-    padding: 4,
-    marginBottom: SPACING.lg,
-  },
-  toggleBtn: {
-    flex: 1,
-    paddingVertical: SPACING.sm,
-    borderRadius: RADIUS.md,
-    alignItems: "center",
-  },
-  toggleActive: {
-    backgroundColor: colors.surface,
-    ...SHADOW.sm,
-  },
-  toggleText: {
-    fontSize: FONTSIZE.md,
-    fontFamily: FONTS.medium,
-    color: colors.textSecondary,
-  },
-  toggleTextActive: {
-    color: colors.primary,
-    fontFamily: FONTS.bold,
-  },
-  form: {
-    marginBottom: SPACING.lg,
-  },
-  inputWrapper: {
-    marginBottom: SPACING.md,
-  },
-  inputLabel: {
-    fontSize: FONTSIZE.sm,
-    fontFamily: FONTS.medium,
-    color: colors.textSecondary,
-    marginBottom: SPACING.xs,
-  },
-  input: {
-    backgroundColor: colors.inputBg,
-    borderRadius: RADIUS.md,
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm + 4,
-    fontSize: FONTSIZE.md,
-    fontFamily: FONTS.regular,
-    color: colors.textPrimary,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  forgotBtn: {
-    alignSelf: "flex-end",
-    marginBottom: SPACING.md,
-  },
-  forgotText: {
-    fontSize: FONTSIZE.sm,
-    fontFamily: FONTS.medium,
-    color: colors.primary,
-  },
-  primaryBtn: {
-    backgroundColor: colors.primary,
-    borderRadius: RADIUS.lg,
-    paddingVertical: SPACING.md,
-    alignItems: "center",
-    ...SHADOW.md,
-  },
-  primaryBtnText: {
-    fontSize: FONTSIZE.lg,
-    fontFamily: FONTS.bold,
-    color: colors.textWhite,
-    letterSpacing: 0.3,
-  },
-  dividerRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: SPACING.md,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: colors.border,
-  },
-  dividerText: {
-    fontSize: FONTSIZE.sm,
-    fontFamily: FONTS.regular,
-    color: colors.textMuted,
-    marginHorizontal: SPACING.sm,
-  },
-  socialRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    gap: SPACING.sm,
-    marginBottom: SPACING.lg,
-  },
-  socialBtn: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: SPACING.xs,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: RADIUS.md,
-    paddingVertical: SPACING.sm + 2,
-    ...SHADOW.sm,
-  },
-  socialIcon: {
-    fontSize: FONTSIZE.lg,
-    fontFamily: FONTS.bold,
-    color: colors.textPrimary,
-  },
-  socialLabel: {
-    fontSize: FONTSIZE.sm,
-    fontFamily: FONTS.medium,
-    color: colors.textPrimary,
-  },
-  guestBtn: {
-    borderWidth: 1.5,
-    borderColor: colors.primary,
-    borderStyle: "dashed",
-    borderRadius: RADIUS.lg,
-    paddingVertical: SPACING.sm + 4,
-    alignItems: "center",
-    marginBottom: SPACING.sm,
-  },
-  guestText: {
-    fontSize: FONTSIZE.md,
-    fontFamily: FONTS.medium,
-    color: colors.primary,
-  },
-  guestDisclaimer: {
-    fontSize: FONTSIZE.xs,
-    fontFamily: FONTS.regular,
-    color: colors.textMuted,
-    textAlign: "center",
-    lineHeight: 16,
-  },
-});
+const makeStyles = (colors) =>
+  StyleSheet.create({
+    root: { flex: 1, backgroundColor: colors.background },
+    container: {
+      flex: 1,
+      paddingHorizontal: SPACING.lg,
+      justifyContent: "center",
+    },
+    logoArea: {
+      alignItems: "center",
+      marginBottom: SPACING.xxl,
+    },
+    logoIcon: { fontSize: 52 },
+    logoText: {
+      fontSize: FONTSIZE.xxl,
+      fontFamily: FONTS.bold,
+      color: colors.textPrimary,
+      marginTop: SPACING.sm,
+    },
+    logoSub: {
+      fontSize: FONTSIZE.sm,
+      fontFamily: FONTS.regular,
+      color: colors.textSecondary,
+      marginTop: SPACING.xs,
+    },
+    tabRow: {
+      flexDirection: "row",
+      backgroundColor: colors.inputBg,
+      borderRadius: RADIUS.lg,
+      padding: 4,
+      marginBottom: SPACING.lg,
+    },
+    tab: {
+      flex: 1,
+      paddingVertical: SPACING.sm,
+      alignItems: "center",
+      borderRadius: RADIUS.md,
+    },
+    tabActive: {
+      backgroundColor: colors.surface,
+      ...SHADOW.sm,
+    },
+    tabText: {
+      fontSize: FONTSIZE.md,
+      fontFamily: FONTS.medium,
+      color: colors.textSecondary,
+    },
+    tabTextActive: {
+      color: colors.primary,
+      fontFamily: FONTS.bold,
+    },
+    form: { gap: SPACING.md },
+    input: {
+      backgroundColor: colors.inputBg,
+      borderRadius: RADIUS.md,
+      paddingHorizontal: SPACING.md,
+      paddingVertical: SPACING.sm + 4,
+      fontSize: FONTSIZE.md,
+      fontFamily: FONTS.regular,
+      color: colors.textPrimary,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    submitBtn: {
+      backgroundColor: colors.primary,
+      borderRadius: RADIUS.lg,
+      paddingVertical: SPACING.md,
+      alignItems: "center",
+      marginTop: SPACING.sm,
+      ...SHADOW.md,
+    },
+    submitBtnDisabled: { opacity: 0.6 },
+    submitBtnText: {
+      fontSize: FONTSIZE.lg,
+      fontFamily: FONTS.bold,
+      color: colors.textWhite,
+    },
+  });

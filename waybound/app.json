@@ -16,7 +16,10 @@
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
-      }
+      },
+      "usesCleartextTraffic": true,
+      "package": "com.waybound.app"
+
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -24,11 +27,20 @@
     "plugins": [
       "expo-font",
       [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#2D6A4F",
+          "sounds": []
+        }
+      ],
+      [
         "expo-location",
         {
-          "locationAlwaysAndWhenInUsePermission": "Waybound needs your location to track your ride and share it with your friends."
+          "locationAlwaysAndWhenInUsePermission": "Waybound needs your location to track your ride and share it with your group."
         }
-      ]
+      ],
+      "expo-status-bar"
     ]
   }
 }

@@ -1,18 +1,28 @@
 import React, { useState } from "react";
 import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  TextInput, StatusBar, Switch, Alert
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  TextInput,
+  StatusBar,
+  Switch,
+  Alert,
+  ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import * as Clipboard from "expo-clipboard";
 import { FONTS, RADIUS, SPACING, FONTSIZE, SHADOW } from "../constants/theme";
 import { useTheme } from "../context/ThemeContext";
+import { createRoom } from "../services/api";
 
 const ROOM_ICONS = ["🚴", "🏍️", "🚗", "🥾", "⛵", "🏕️"];
 
 export default function CreateRoomScreen({ navigation }) {
   const { isDark, colors } = useTheme();
   const s = makeStyles(colors);
+  const [loading, setLoading] = useState(false);
 
   const [roomName, setRoomName] = useState("");
   const [selectedIcon, setSelectedIcon] = useState("🚴");
@@ -24,8 +34,9 @@ export default function CreateRoomScreen({ navigation }) {
   const [generatedCode] = useState(() => {
     const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
     const segment = () =>
-      Array.from({ length: 4 }, () =>
-        chars[Math.floor(Math.random() * chars.length)]
+      Array.from(
+        { length: 4 },
+        () => chars[Math.floor(Math.random() * chars.length)],
       ).join("");
     return `WB-${segment()}`;
   });
@@ -50,7 +61,6 @@ export default function CreateRoomScreen({ navigation }) {
         contentContainerStyle={s.scroll}
         showsVerticalScrollIndicator={false}
       >
-
         {/* ── Room Icon Picker ── */}
         <Text style={s.sectionLabel}>Choose an Icon</Text>
         <View style={s.iconRow}>
@@ -98,7 +108,6 @@ export default function CreateRoomScreen({ navigation }) {
         {/* ── Settings Toggles ── */}
         <Text style={s.sectionLabel}>Room Settings</Text>
         <View style={s.settingsCard}>
-
           <View style={s.settingRow}>
             <View>
               <Text style={s.settingTitle}>Private Room</Text>
@@ -141,7 +150,6 @@ export default function CreateRoomScreen({ navigation }) {
               thumbColor={colors.textWhite}
             />
           </View>
-
         </View>
 
         {/* ── Generated Room Code Preview ── */}
@@ -155,7 +163,10 @@ export default function CreateRoomScreen({ navigation }) {
             style={s.copyBtn}
             onPress={async () => {
               await Clipboard.setStringAsync(generatedCode);
-              Alert.alert("Copied!", `Room code ${generatedCode} copied to clipboard.`);
+              Alert.alert(
+                "Copied!",
+                `Room code ${generatedCode} copied to clipboard.`,
+              );
             }}
           >
             <Text style={s.copyBtnText}>Copy</Text>
@@ -165,223 +176,245 @@ export default function CreateRoomScreen({ navigation }) {
         {/* ── Create Button ── */}
         <TouchableOpacity
           style={[s.createBtn, !roomName.trim() && s.createBtnDisabled]}
-          onPress={() => navigation.navigate("LiveTracking")}
-          disabled={!roomName.trim()}
+          onPress={async () => {
+            if (!roomName.trim()) return;
+            setLoading(true);
+            try {
+              const result = await createRoom({
+                name: roomName.trim(),
+                icon: selectedIcon,
+                maxMembers,
+                isPrivate,
+                safetyAlerts,
+                shareLocation,
+              });
+              navigation.navigate("LiveTracking", { room: result.room });
+            } catch (error) {
+              Alert.alert("Error", error.message);
+            } finally {
+              setLoading(false);
+            }
+          }}
+          disabled={!roomName.trim() || loading}
         >
           <Text style={s.createBtnText}>
-            {selectedIcon} Create Room
+            {loading ? (
+              <ActivityIndicator color={colors.textWhite} />
+            ) : (
+              <Text style={s.createBtnText}>{selectedIcon} Create Room</Text>
+            )}
           </Text>
         </TouchableOpacity>
 
         {!roomName.trim() && (
           <Text style={s.createHint}>Enter a room name to continue</Text>
         )}
-
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-const makeStyles = (colors) => StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  topBar: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.md,
-    backgroundColor: colors.background,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  backBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: RADIUS.md,
-    backgroundColor: colors.inputBg,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  backArrow: {
-    fontSize: FONTSIZE.xl,
-    color: colors.textPrimary,
-    fontFamily: FONTS.medium,
-  },
-  topBarTitle: {
-    fontSize: FONTSIZE.lg,
-    fontFamily: FONTS.bold,
-    color: colors.textPrimary,
-  },
-  scroll: {
-    flexGrow: 1,
-    paddingHorizontal: SPACING.lg,
-    paddingTop: SPACING.lg,
-    paddingBottom: SPACING.xxl,
-  },
-  sectionLabel: {
-    fontSize: FONTSIZE.sm,
-    fontFamily: FONTS.medium,
-    color: colors.textSecondary,
-    marginBottom: SPACING.sm,
-    marginTop: SPACING.md,
-  },
-  iconRow: {
-    flexDirection: "row",
-    gap: SPACING.sm,
-    marginBottom: SPACING.xs,
-  },
-  iconBtn: {
-    width: 48,
-    height: 48,
-    borderRadius: RADIUS.md,
-    backgroundColor: colors.inputBg,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 2,
-    borderColor: "transparent",
-  },
-  iconBtnActive: {
-    borderColor: colors.primary,
-    backgroundColor: colors.surface,
-    ...SHADOW.sm,
-  },
-  iconEmoji: {
-    fontSize: 22,
-  },
-  input: {
-    backgroundColor: colors.inputBg,
-    borderRadius: RADIUS.md,
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm + 4,
-    fontSize: FONTSIZE.md,
-    fontFamily: FONTS.regular,
-    color: colors.textPrimary,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  charCount: {
-    fontSize: FONTSIZE.xs,
-    fontFamily: FONTS.regular,
-    color: colors.textMuted,
-    textAlign: "right",
-    marginTop: 4,
-  },
-  memberCountRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: SPACING.lg,
-  },
-  counterBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: RADIUS.md,
-    backgroundColor: colors.inputBg,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  counterBtnText: {
-    fontSize: FONTSIZE.xl,
-    fontFamily: FONTS.bold,
-    color: colors.textPrimary,
-  },
-  counterValue: {
-    fontSize: FONTSIZE.xxl,
-    fontFamily: FONTS.bold,
-    color: colors.textPrimary,
-    minWidth: 32,
-    textAlign: "center",
-  },
-  settingsCard: {
-    backgroundColor: colors.surface,
-    borderRadius: RADIUS.lg,
-    padding: SPACING.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    ...SHADOW.sm,
-  },
-  settingRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingVertical: SPACING.sm,
-  },
-  settingDivider: {
-    height: 1,
-    backgroundColor: colors.border,
-  },
-  settingTitle: {
-    fontSize: FONTSIZE.md,
-    fontFamily: FONTS.medium,
-    color: colors.textPrimary,
-  },
-  settingSub: {
-    fontSize: FONTSIZE.xs,
-    fontFamily: FONTS.regular,
-    color: colors.textSecondary,
-    marginTop: 2,
-  },
-  codeCard: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    backgroundColor: colors.surface,
-    borderRadius: RADIUS.lg,
-    padding: SPACING.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    ...SHADOW.sm,
-  },
-  codeLabel: {
-    fontSize: FONTSIZE.xs,
-    fontFamily: FONTS.regular,
-    color: colors.textSecondary,
-  },
-  codeValue: {
-    fontSize: FONTSIZE.xxl,
-    fontFamily: FONTS.bold,
-    color: colors.primary,
-    letterSpacing: 2,
-    marginTop: 2,
-  },
-  copyBtn: {
-    backgroundColor: colors.inputBg,
-    borderRadius: RADIUS.md,
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  copyBtnText: {
-    fontSize: FONTSIZE.sm,
-    fontFamily: FONTS.medium,
-    color: colors.primary,
-  },
-  createBtn: {
-    backgroundColor: colors.primary,
-    borderRadius: RADIUS.lg,
-    paddingVertical: SPACING.md,
-    alignItems: "center",
-    marginTop: SPACING.lg,
-    ...SHADOW.md,
-  },
-  createBtnDisabled: {
-    backgroundColor: colors.border,
-  },
-  createBtnText: {
-    fontSize: FONTSIZE.lg,
-    fontFamily: FONTS.bold,
-    color: colors.textWhite,
-  },
-  createHint: {
-    fontSize: FONTSIZE.xs,
-    fontFamily: FONTS.regular,
-    color: colors.textMuted,
-    textAlign: "center",
-    marginTop: SPACING.sm,
-  },
-});
+const makeStyles = (colors) =>
+  StyleSheet.create({
+    root: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    topBar: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      paddingHorizontal: SPACING.lg,
+      paddingVertical: SPACING.md,
+      backgroundColor: colors.background,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+    backBtn: {
+      width: 40,
+      height: 40,
+      borderRadius: RADIUS.md,
+      backgroundColor: colors.inputBg,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    backArrow: {
+      fontSize: FONTSIZE.xl,
+      color: colors.textPrimary,
+      fontFamily: FONTS.medium,
+    },
+    topBarTitle: {
+      fontSize: FONTSIZE.lg,
+      fontFamily: FONTS.bold,
+      color: colors.textPrimary,
+    },
+    scroll: {
+      flexGrow: 1,
+      paddingHorizontal: SPACING.lg,
+      paddingTop: SPACING.lg,
+      paddingBottom: SPACING.xxl,
+    },
+    sectionLabel: {
+      fontSize: FONTSIZE.sm,
+      fontFamily: FONTS.medium,
+      color: colors.textSecondary,
+      marginBottom: SPACING.sm,
+      marginTop: SPACING.md,
+    },
+    iconRow: {
+      flexDirection: "row",
+      gap: SPACING.sm,
+      marginBottom: SPACING.xs,
+    },
+    iconBtn: {
+      width: 48,
+      height: 48,
+      borderRadius: RADIUS.md,
+      backgroundColor: colors.inputBg,
+      alignItems: "center",
+      justifyContent: "center",
+      borderWidth: 2,
+      borderColor: "transparent",
+    },
+    iconBtnActive: {
+      borderColor: colors.primary,
+      backgroundColor: colors.surface,
+      ...SHADOW.sm,
+    },
+    iconEmoji: {
+      fontSize: 22,
+    },
+    input: {
+      backgroundColor: colors.inputBg,
+      borderRadius: RADIUS.md,
+      paddingHorizontal: SPACING.md,
+      paddingVertical: SPACING.sm + 4,
+      fontSize: FONTSIZE.md,
+      fontFamily: FONTS.regular,
+      color: colors.textPrimary,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    charCount: {
+      fontSize: FONTSIZE.xs,
+      fontFamily: FONTS.regular,
+      color: colors.textMuted,
+      textAlign: "right",
+      marginTop: 4,
+    },
+    memberCountRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: SPACING.lg,
+    },
+    counterBtn: {
+      width: 44,
+      height: 44,
+      borderRadius: RADIUS.md,
+      backgroundColor: colors.inputBg,
+      alignItems: "center",
+      justifyContent: "center",
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    counterBtnText: {
+      fontSize: FONTSIZE.xl,
+      fontFamily: FONTS.bold,
+      color: colors.textPrimary,
+    },
+    counterValue: {
+      fontSize: FONTSIZE.xxl,
+      fontFamily: FONTS.bold,
+      color: colors.textPrimary,
+      minWidth: 32,
+      textAlign: "center",
+    },
+    settingsCard: {
+      backgroundColor: colors.surface,
+      borderRadius: RADIUS.lg,
+      padding: SPACING.md,
+      borderWidth: 1,
+      borderColor: colors.border,
+      ...SHADOW.sm,
+    },
+    settingRow: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      paddingVertical: SPACING.sm,
+    },
+    settingDivider: {
+      height: 1,
+      backgroundColor: colors.border,
+    },
+    settingTitle: {
+      fontSize: FONTSIZE.md,
+      fontFamily: FONTS.medium,
+      color: colors.textPrimary,
+    },
+    settingSub: {
+      fontSize: FONTSIZE.xs,
+      fontFamily: FONTS.regular,
+      color: colors.textSecondary,
+      marginTop: 2,
+    },
+    codeCard: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      backgroundColor: colors.surface,
+      borderRadius: RADIUS.lg,
+      padding: SPACING.md,
+      borderWidth: 1,
+      borderColor: colors.border,
+      ...SHADOW.sm,
+    },
+    codeLabel: {
+      fontSize: FONTSIZE.xs,
+      fontFamily: FONTS.regular,
+      color: colors.textSecondary,
+    },
+    codeValue: {
+      fontSize: FONTSIZE.xxl,
+      fontFamily: FONTS.bold,
+      color: colors.primary,
+      letterSpacing: 2,
+      marginTop: 2,
+    },
+    copyBtn: {
+      backgroundColor: colors.inputBg,
+      borderRadius: RADIUS.md,
+      paddingHorizontal: SPACING.md,
+      paddingVertical: SPACING.sm,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    copyBtnText: {
+      fontSize: FONTSIZE.sm,
+      fontFamily: FONTS.medium,
+      color: colors.primary,
+    },
+    createBtn: {
+      backgroundColor: colors.primary,
+      borderRadius: RADIUS.lg,
+      paddingVertical: SPACING.md,
+      alignItems: "center",
+      marginTop: SPACING.lg,
+      ...SHADOW.md,
+    },
+    createBtnDisabled: {
+      backgroundColor: colors.border,
+    },
+    createBtnText: {
+      fontSize: FONTSIZE.lg,
+      fontFamily: FONTS.bold,
+      color: colors.textWhite,
+    },
+    createHint: {
+      fontSize: FONTSIZE.xs,
+      fontFamily: FONTS.regular,
+      color: colors.textMuted,
+      textAlign: "center",
+      marginTop: SPACING.sm,
+    },
+  });
