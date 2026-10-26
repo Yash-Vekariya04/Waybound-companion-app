@@ -1,16 +1,22 @@
 {
   "expo": {
-    "name": "waybound",
+    "name": "Waybound",
     "slug": "waybound",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0A0F1E"
+    },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.waybound.app"
     },
     "android": {
-      "permissions": ["android.permission.INTERNET"],
+      "permissions": ["android.permission.INTERNET", "android.permission.ACCESS_FINE_LOCATION", "android.permission.ACCESS_COARSE_LOCATION"],
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -18,8 +24,8 @@
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "usesCleartextTraffic": true,
-      "package": "com.waybound.app"
-
+      "package": "com.waybound.app",
+      "softwareKeyboardLayoutMode": "pan"
     },
     "web": {
       "favicon": "./assets/favicon.png"
