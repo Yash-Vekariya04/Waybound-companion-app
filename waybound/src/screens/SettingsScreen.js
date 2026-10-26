@@ -6,10 +6,13 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { FONTS, RADIUS, SPACING, FONTSIZE, SHADOW } from "../constants/theme";
 import { useTheme } from "../context/ThemeContext";
+import { useAuth } from "../context/AuthContext";
+
 
 const VERSION = "1.0.0";
 
 export default function SettingsScreen({ navigation }) {
+  const { user } = useAuth();
   const { isDark, toggleTheme, colors } = useTheme();
   const s = makeStyles(colors);
 
@@ -73,8 +76,8 @@ export default function SettingsScreen({ navigation }) {
             <Text style={s.avatarText}>Y</Text>
           </View>
           <View style={s.profileInfo}>
-            <Text style={s.profileName}>Yash</Text>
-            <Text style={s.profileEmail}>yash@email.com</Text>
+            <Text style={s.profileName}><Text>{user?.name || "No Name"}</Text></Text>
+            <Text style={s.profileEmail}><Text>{user?.email || "No Email"}</Text></Text>
           </View>
           <TouchableOpacity style={s.editBtn}>
             <Text style={s.editBtnText}>Edit</Text>
