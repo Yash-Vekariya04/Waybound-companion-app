@@ -42,7 +42,16 @@
           "locationAlwaysAndWhenInUsePermission": "Waybound needs your location to track your ride and share it with your group."
         }
       ],
-      "expo-status-bar"
+      "expo-status-bar",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "enableProguardInReleaseBuilds": false,
+            "enableShrinkResourcesInReleaseBuilds": false
+          }
+        }
+      ]
     ],
     "extra": {
       "eas": {
