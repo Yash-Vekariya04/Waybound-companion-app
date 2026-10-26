@@ -1,0 +1,9 @@
+# Backend secrets
+waybound-server/.env
+waybound-server/node_modules/
+
+# Frontend
+waybound/node_modules/
+
+# Logs
+*.log
