@@ -1,4 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { SERVER_URL } from "../config";
 
 let socket = null;
 
@@ -11,7 +12,7 @@ export async function connectSocket() {
   // Use require inside function to avoid Metro bundling issues
   const { io } = require("socket.io-client");
 
-  socket = io("http://localhost:3000", {
+  socket = io(SERVER_URL, {
     auth: { token },
     transports: ["websocket"],
     reconnection: true,

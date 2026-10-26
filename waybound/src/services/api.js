@@ -1,8 +1,8 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-
+import { API_URL } from "../config";
 // ── Base URL ─────────────────────────────────────────
 // This works because of: adb reverse tcp:3000 tcp:3000
-const BASE_URL = "http://localhost:3000/api";
+const BASE_URL = API_URL;
 
 // ── Helper: get stored token ─────────────────────────
 async function getToken() {
